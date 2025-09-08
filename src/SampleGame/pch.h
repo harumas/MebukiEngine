@@ -6,6 +6,7 @@
 #define WIN32_LEAN_AND_MEAN // windows.hから一般的でない機能を除外する
 #define IDS_APP_TITLE			103
 #define IDC_MEBUKIPROJECT			104
+#define NOMINMAX // min,maxマクロを定義しない
 #include <Windows.h>
 
 // DirectX

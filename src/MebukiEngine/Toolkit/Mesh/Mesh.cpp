@@ -1,24 +1,34 @@
 ﻿#include "Mesh.h"
-
-
+#include "ModelLoader.h"
 
 Mesh::Mesh()
 {
+
 }
 
-void Mesh::Create(const std::wstring& path)
+void Mesh::Create(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology)
 {
-	// TODO: メッシュ読み込み処理の実装 
+	ModelLoader loader;
+	meshData = loader.Load(path, topology);
+
+	CreateVertexBuffer(meshData.vertices);
+
+	const void* indicesData = meshData.use32bitIndex
+		? static_cast<const void*>(meshData.indices32.data())
+		: static_cast<const void*>(meshData.indices16.data());
+	size_t indicesCount = meshData.use32bitIndex ? meshData.indices32.size() : meshData.indices16.size();
+	CreateIndexBuffer(indicesData, indicesCount, meshData.use32bitIndex);
 }
 
-void Mesh::Create(const std::vector<Vertex>& vertices, const std::vector<unsigned short>& indices, D3D12_PRIMITIVE_TOPOLOGY topology)
+void Mesh::Create(std::vector<Vertex> vertices, std::vector<uint16_t> indices, D3D12_PRIMITIVE_TOPOLOGY topology)
 {
-	meshData.vertices = vertices;
-	meshData.indices = indices;
+	meshData.vertices = std::move(vertices);
+	meshData.indices16 = std::move(indices);
+	meshData.use32bitIndex = false;
 	meshData.topology = topology;
 
-	CreateVertexBuffer(vertices);
-	CreateIndexBuffer(indices);
+	CreateVertexBuffer(meshData.vertices);
+	CreateIndexBuffer(meshData.indices16.data(), meshData.indices16.size(), false);
 }
 
 void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
@@ -49,14 +59,14 @@ void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 	vertexBufferView.SizeInBytes = vertexBufferSize;
 }
 
-void Mesh::CreateIndexBuffer(const std::vector<unsigned short>& indices)
+void Mesh::CreateIndexBuffer(const void* indices, size_t count, bool use32bit)
 {
-	// インデックス座標
-	const UINT indexBufferSize = sizeof(unsigned short) * indices.size();
+	const UINT indexSize = use32bit ? sizeof(uint32_t) : sizeof(uint16_t);
+	const UINT indexBufferSize = static_cast<UINT>(count * indexSize);
+
 	auto indexHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	auto indexResDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
 
-	// インデックスバッファの生成
 	winrt::check_hresult(GraphicsDevice::Get()->CreateCommittedResource(
 		&indexHeapProp,
 		D3D12_HEAP_FLAG_NONE,
@@ -65,14 +75,14 @@ void Mesh::CreateIndexBuffer(const std::vector<unsigned short>& indices)
 		nullptr,
 		IID_PPV_ARGS_WRT(indexBuffer)));
 
-	// インデックス情報のコピー
-	unsigned short* indexMap = nullptr;
-	indexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&indexMap));
-	std::ranges::copy(indices, indexMap);
+	// コピー
+	void* mapped = nullptr;
+	indexBuffer->Map(0, nullptr, &mapped);
+	std::memcpy(mapped, indices, indexBufferSize);
 	indexBuffer->Unmap(0, nullptr);
 
-	// インデックスバッファビューの生成
+	// IBV設定
 	indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
 	indexBufferView.SizeInBytes = indexBufferSize;
-	indexBufferView.Format = DXGI_FORMAT_R16_UINT;	// 頂点座標
+	indexBufferView.Format = use32bit ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
 }

@@ -6,8 +6,8 @@ class Mesh
 {
 public:
 	Mesh();
-	void Create(const std::wstring& path);
-	void Create(const std::vector<Vertex>& vertices, const std::vector<unsigned short>& indices, D3D12_PRIMITIVE_TOPOLOGY topology);
+	void Create(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology);
+	void Create(std::vector<Vertex> vertices, std::vector<uint16_t> indices, D3D12_PRIMITIVE_TOPOLOGY topology);
 
 	const MeshData& GetMeshData() { return meshData; }
 	D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() { return vertexBufferView; }
@@ -22,5 +22,5 @@ private:
 	D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
 
 	void CreateVertexBuffer(const std::vector<Vertex>& vertices);
-	void CreateIndexBuffer(const std::vector<unsigned short>& indices);
+	void CreateIndexBuffer(const void* indices, size_t count, bool use32bit);
 };

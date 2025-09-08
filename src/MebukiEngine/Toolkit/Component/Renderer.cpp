@@ -16,5 +16,7 @@ void Renderer::OnDraw(const GraphicsContext& context)
 	matrixBuffer.SetBufferData({ world,viewProj });
 	matrixBuffer.SetConstantBufferView(context, 0);
 
-	context.Draw(meshData.indices.size(), 0);
+	int indicesCount = meshData.use32bitIndex ? meshData.indices32.size() : meshData.indices16.size();
+
+	context.Draw(indicesCount, 0);
 }

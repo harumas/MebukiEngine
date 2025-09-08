@@ -28,8 +28,11 @@ void TestWorld::Initialize()
 	auto halfLambertPass = shaderPassPool->GetShaderPass<HalfLambertPass>();
 	Material material(halfLambertPass);
 
+	Mesh mesh;
+	mesh.Create("Assets/SampleModel.glb", D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 	std::shared_ptr<Renderer> renderer = cube->AddComponent<Renderer>();
-	renderer->SetMesh(PrimitiveMesh::CreateCube());
+	renderer->SetMesh(mesh);
 	renderer->SetMaterial(material);
 }
 

@@ -107,7 +107,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\DirectX-Headers\include\directx;$(ProjectDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\DirectX-Headers\include\directx</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
@@ -123,6 +123,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\DirectX-Headers\include\directx</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -134,6 +135,7 @@
   <ItemGroup>
     <ClInclude Include="Application\GameApplication.h" />
     <ClInclude Include="Basic\UID.h" />
+    <ClInclude Include="Toolkit\Mesh\ModelLoader.h" />
     <ClInclude Include="Toolkit\Component\DirectionalLight.h" />
     <ClInclude Include="Toolkit\Component\PointLight.h" />
     <ClInclude Include="Rendering\Rendering.h" />
@@ -141,6 +143,7 @@
     <ClInclude Include="Toolkit\Component\Camera.h" />
     <ClInclude Include="Toolkit\Mathematics.h" />
     <ClInclude Include="Toolkit\Math\Matrices.h" />
+    <ClInclude Include="Toolkit\Mesh\StreamReader.h" />
     <ClInclude Include="Toolkit\Rendering.h" />
     <ClInclude Include="Toolkit\Rendering\Material.h" />
     <ClInclude Include="Toolkit\Actor\Actor.h" />
@@ -182,6 +185,7 @@
     <ClCompile Include="Application\WinApplication.cpp" />
     <ClCompile Include="Application\GameApplication.cpp" />
     <ClCompile Include="Basic\UID.cpp" />
+    <ClCompile Include="Toolkit\Mesh\ModelLoader.cpp" />
     <ClCompile Include="Toolkit\Component\DirectionalLight.cpp" />
     <ClCompile Include="Toolkit\Component\PointLight.cpp" />
     <ClCompile Include="Toolkit\Actor\Actor.cpp" />
@@ -205,7 +209,21 @@
     <ClCompile Include="Toolkit\World\WorldManager.cpp" />
     <ClCompile Include="Toolkit\World\WorldProfile.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets" Condition="Exists('..\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets')" />
+    <Import Project="..\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets" Condition="Exists('..\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets')" />
+    <Import Project="..\packages\directxtex_desktop_win10.2025.7.10.1\build\native\directxtex_desktop_win10.targets" Condition="Exists('..\packages\directxtex_desktop_win10.2025.7.10.1\build\native\directxtex_desktop_win10.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>このプロジェクトは、このコンピューター上にない NuGet パッケージを参照しています。それらのパッケージをダウンロードするには、[NuGet パッケージの復元] を使用します。詳細については、http://go.microsoft.com/fwlink/?LinkID=322105 を参照してください。見つからないファイルは {0} です。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets'))" />
+    <Error Condition="!Exists('..\packages\directxtex_desktop_win10.2025.7.10.1\build\native\directxtex_desktop_win10.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtex_desktop_win10.2025.7.10.1\build\native\directxtex_desktop_win10.targets'))" />
+  </Target>
 </Project>
