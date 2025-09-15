@@ -1,4 +1,5 @@
 #pragma once
+#include "Rendering/GpuConstants.h"
 #include "Rendering/RenderPipeline.h"
 #include "Toolkit/World/WorldManager.h"
 #include "Toolkit/World/WorldProfile.h"
@@ -19,8 +20,9 @@ public:
 private:
 	RenderPipeline renderPipeline;
 	WorldManager worldManager;
+	EngineService engineService;
 	std::shared_ptr<ActorService> actorService;
 
-	void Render(const GraphicsContext& context);
+	void Render(const GraphicsContext& context, GpuConstants& gpuConstants);
 };
 

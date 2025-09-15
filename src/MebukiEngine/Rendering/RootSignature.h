@@ -17,7 +17,7 @@ struct RootParameter
 	};
 };
 
-class RootSignature : public winrt::implements<RootSignature, winrt::Windows::Foundation::IInspectable>
+class RootSignature
 {
 public:
 	RootSignature();

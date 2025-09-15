@@ -1,7 +1,5 @@
 ﻿#include "Camera.h"
 
-std::shared_ptr<Camera> Camera::current = nullptr;
-
 Camera::Camera(const std::shared_ptr<Actor>& actorRef) :
 	Component(actorRef),
 	fov(XM_PIDIV2* (2.0 / 3.0)), //60 degrees
@@ -40,4 +38,16 @@ void Camera::SetYaw(float yaw)
 void Camera::SetPitch(float pitch)
 {
 	transform->rotation.x = pitch;
+}
+
+void Camera::OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants)
+{
+	const DirectX::XMMATRIX viewProj = GetViewMatrix() * GetProjectionMatrix(context.GetAspectRatio());
+	const DirectX::XMFLOAT3 position = { transform->position.x, transform->position.y, transform->position.z };
+
+	XMFLOAT4X4 matrix;
+	XMStoreFloat4x4(&matrix, viewProj);
+
+	const CameraFrameData cameraFrameData = { matrix,position };
+	gpuConstants.SetCameraFrameData(cameraFrameData);
 }

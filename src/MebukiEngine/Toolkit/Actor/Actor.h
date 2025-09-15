@@ -35,7 +35,8 @@ public:
 	}
 
 	void InvokeOnUpdate();
-	void InvokeOnDraw(const GraphicsContext& context);
+	void InvokeOnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants);
+	void InvokeOnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants);
 	void InvokeOnDestroy();
 
 private:

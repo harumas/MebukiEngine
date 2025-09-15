@@ -13,6 +13,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
+#include <DirectXTex.h>
 #include <d3dcompiler.h>
 #include <winrt/base.h>
 using namespace DirectX;
@@ -43,7 +44,7 @@ using namespace DirectX;
 #pragma comment( lib, "d3dcompiler.lib" )
 
 // DirectXTex
-//#pragma comment( lib, "DirectXTex.lib" )
+#pragma comment( lib, "DirectXTex.lib" )
 
 // XInput
 #pragma comment( lib, "XInput.lib" )

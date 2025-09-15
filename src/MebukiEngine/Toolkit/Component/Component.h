@@ -2,6 +2,8 @@
 #include <Rendering/Rendering.h>
 #include <Toolkit/Entity/Entity.h>
 
+#include "Rendering/GpuConstants.h"
+
 class Actor;
 
 class Component : public Entity
@@ -14,7 +16,8 @@ public:
 	virtual ~Component() = default;
 	virtual void OnCreate() {}
 	virtual void OnUpdate() {}
-	virtual void OnDraw(const GraphicsContext& context) {}
+	virtual void OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants) {}
+	virtual void OnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants) {}
 	virtual void OnDestroy() {}
 
 private:

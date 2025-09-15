@@ -4,9 +4,8 @@ DirectionalLight::DirectionalLight(const std::shared_ptr<Actor>& actorRef) : Com
 {
 }
 
-void DirectionalLight::OnDraw(const GraphicsContext& context)
+void DirectionalLight::OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants)
 {
-	constantBuffer.SetBufferData(currentData);
-	constantBuffer.SetConstantBufferView(context, 1);
+	gpuConstants.SetDirectionalLightFrameData(currentData);
 }
 

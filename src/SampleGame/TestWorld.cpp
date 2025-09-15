@@ -2,10 +2,11 @@
 #include "TestWorld.h"
 #include "ShaderPass/HalfLambertPass.h"
 #include "Toolkit/Component/DirectionalLight.h"
+#include "Toolkit/Rendering/MaterialHandler.h"
 
-void TestWorld::Initialize()
+void TestWorld::Initialize(const EngineService& engineService)
 {
-	auto actorService = EngineService::GetInstance().Resolve<ActorService>();
+	auto actorService = engineService.Resolve<ActorService>();
 
 	auto dLightActor = actorService->Create(L"DirectionalLight");
 	dLightActor->AddComponent<DirectionalLight>();
@@ -20,20 +21,21 @@ void TestWorld::Initialize()
 	cameraActor->GetComponent<Transform>()->position = Vec3(0.0f, 0.0f, -5.0f);
 
 	std::shared_ptr<Camera> camera = cameraActor->AddComponent<Camera>();
-	Camera::current = camera;
 
 	cube = actorService->Create(L"TestActor");
 
-	auto shaderPassPool = EngineService::GetInstance().Resolve<ShaderPassPool>();
+	auto shaderPassPool = engineService.Resolve<ShaderPassPool>();
 	auto halfLambertPass = shaderPassPool->GetShaderPass<HalfLambertPass>();
-	Material material(halfLambertPass);
+
+	auto materialHandler = engineService.Resolve<MaterialHandler>();
+	Material halfLambert = materialHandler->Create(halfLambertPass);
 
 	Mesh mesh;
 	mesh.Create("Assets/SampleModel.glb", D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	std::shared_ptr<Renderer> renderer = cube->AddComponent<Renderer>();
 	renderer->SetMesh(mesh);
-	renderer->SetMaterial(material);
+	renderer->SetMaterial(halfLambert);
 }
 
 void TestWorld::Update()

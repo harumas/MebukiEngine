@@ -1,13 +1,19 @@
 #pragma once
-#include "Rendering/ShaderPass.h"
+#include "Toolkit/Rendering/MaterialLayout.h"
 
 class HalfLambertPass : public ShaderPass
 {
 public:
 	HalfLambertPass()
+		: ShaderPass(
+			MaterialLayout
+			{
+				{"BaseColor", MaterialLayout::ParamType::Float4}
+			})
 	{
 		shaderPath = L"Shaders/HalfLambertShaders.hlsl";
 
+		// PSOの設定
 		psoDesc = {};
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);         // ラスタライザーステート
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                   // ブレンドステート

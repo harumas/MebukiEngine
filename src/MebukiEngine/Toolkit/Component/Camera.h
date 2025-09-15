@@ -15,8 +15,9 @@ public:
 	void SetYaw(float yaw);
 	void SetPitch(float pitch);
 
+	void OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants) override;
+
 	std::shared_ptr<Transform> transform;
-	static std::shared_ptr<Camera> current;
 
 private:
 	float fov;

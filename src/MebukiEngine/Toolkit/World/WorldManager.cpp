@@ -1,25 +1,24 @@
 #include "WorldManager.h"
 
-void WorldManager::Switch(int index)
+void WorldManager::Switch(int index, const EngineService& engineService)
 {
-	if (currentScene != nullptr)
+	if (currentWorld != nullptr)
 	{
-		currentScene.reset();
+		currentWorld.reset();
 	}
 
 	if (index < factory->size())
 	{
-		currentScene = factory->at(index)();
-		currentScene->Initialize();
+		currentWorld = factory->at(index)();
+		currentWorld->Initialize(engineService);
 		return;
 	}
 
-	ThrowMessage("Scene " + std::to_string(index) + " does not exist!");
+	ThrowMessage("World " + std::to_string(index) + " does not exist!");
 }
 
-const std::unique_ptr<World>& WorldManager::GetCurrentScene()
+const std::unique_ptr<World>& WorldManager::GetCurrentWorld()
 {
-	return currentScene;
+	return currentWorld;
 }
-
 

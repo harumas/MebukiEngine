@@ -18,13 +18,23 @@ void Actor::InvokeOnUpdate()
 	}
 }
 
-void Actor::InvokeOnDraw(const GraphicsContext& context)
+void Actor::InvokeOnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants)
 {
 	auto valuesView = std::ranges::views::values(components);
 
 	for (const auto& component : valuesView)
 	{
-		component->OnDraw(context);
+		component->OnPreDraw(context, gpuConstants);
+	}
+}
+
+void Actor::InvokeOnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants)
+{
+	auto valuesView = std::ranges::views::values(components);
+
+	for (const auto& component : valuesView)
+	{
+		component->OnDraw(context, gpuConstants);
 	}
 }
 

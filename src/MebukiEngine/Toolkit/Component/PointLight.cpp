@@ -4,8 +4,8 @@ PointLight::PointLight(const std::shared_ptr<Actor>& actorRef) : Component(actor
 {
 }
 
-void PointLight::OnDraw(const GraphicsContext& context)
+void PointLight::OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants)
 {
-	constantBuffer.SetBufferData(currentData);
-	constantBuffer.SetConstantBufferView(context, 2);
+	gpuConstants.SetPointLightFrameData(currentData);
 }
+

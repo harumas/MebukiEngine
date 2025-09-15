@@ -2,6 +2,7 @@
 #include "RootSignature.h"
 #include "RenderTargetBuffer.h"
 #include "DepthStencilBuffer.h"
+#include "GpuConstants.h"
 #include "GraphicsContext.h"
 
 class RootSignature;
@@ -9,10 +10,10 @@ class RootSignature;
 class RenderPipeline
 {
 public:
-	EventListener<GraphicsContext&> onRenderProcess;
+	EventListener<GraphicsContext&, GpuConstants&> onRenderProcess;
 
 	void Initialize(const WindowInfo& windowInfo);
-	void Update(const WindowInfo& windowInfo);
+	void RenderFrame(const WindowInfo& windowInfo);
 	void Finalize();
 
 	ID3D12RootSignature* GetRootSignature() const;
@@ -21,14 +22,15 @@ private:
 	static constexpr UINT frameBufferCount = 2;
 	winrt::com_ptr<ID3D12Device> device = nullptr;
 	winrt::com_ptr<IDXGISwapChain3> swapChain = nullptr;
-	winrt::com_ptr<RenderTargetBuffer> renderTargetBuffer = nullptr;
-	winrt::com_ptr<DepthStencilBuffer> depthStencilBuffer = nullptr;
 	winrt::com_ptr<ID3D12CommandAllocator> commandAllocator[frameBufferCount] = {};
 	winrt::com_ptr<ID3D12CommandQueue> commandQueue = nullptr;
-	winrt::com_ptr<RootSignature> rootSignature = nullptr;
 	winrt::com_ptr<ID3D12PipelineState> pipelineState = nullptr;
 	winrt::com_ptr<ID3D12GraphicsCommandList> commandList = nullptr;
 	winrt::com_ptr<ID3D12Fence> fence = nullptr;
+	std::unique_ptr<RenderTargetBuffer> renderTargetBuffer = nullptr;
+	std::unique_ptr<DepthStencilBuffer> depthStencilBuffer = nullptr;
+	std::unique_ptr<RootSignature> rootSignature = nullptr;
+	std::unique_ptr<GpuConstants> gpuConstants = nullptr;
 
 	UINT fenceValue[frameBufferCount] = {};
 	HANDLE fenceEvent = nullptr;
@@ -44,5 +46,4 @@ private:
 
 	void WaitForFence();
 	void WaitForNextFrame();
-	void PopulateCommandList();
 };

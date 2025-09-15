@@ -12,7 +12,7 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	virtual void Initialize() = 0;
+	virtual void Initialize(const EngineService& engineService) = 0;
 
 	/// <summary>
 	/// 更新
@@ -23,4 +23,5 @@ public:
 	{
 		return "Unknown";
 	}
+
 };

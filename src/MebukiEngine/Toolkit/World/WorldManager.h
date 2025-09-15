@@ -14,11 +14,11 @@ public:
 	{
 	}
 
-	void Switch(int index);
+	void Switch(int index, const EngineService& engineService);
 
-	const std::unique_ptr<World>& GetCurrentScene();
+	const std::unique_ptr<World>& GetCurrentWorld();
 
 private:
-	std::unique_ptr<World> currentScene;
+	std::unique_ptr<World> currentWorld;
 	std::shared_ptr<std::vector<FactoryFunction>> factory;
 };

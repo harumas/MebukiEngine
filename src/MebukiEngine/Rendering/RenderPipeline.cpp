@@ -1,5 +1,6 @@
 #include "RenderPipeline.h"
 #include "GraphicsDevice.h"
+#include "RegisterType.h"
 
 void RenderPipeline::Initialize(const WindowInfo& windowInfo)
 {
@@ -11,6 +12,9 @@ void RenderPipeline::Initialize(const WindowInfo& windowInfo)
 	CreateD3D12Device(dxgiFactory.get(), device);
 	GraphicsDevice::Bind(device);
 
+	// GPU定数バッファの作成
+	gpuConstants = std::make_unique<GpuConstants>();
+
 	// コマンドキューの作成
 	CreateCommandQueue();
 
@@ -21,7 +25,7 @@ void RenderPipeline::Initialize(const WindowInfo& windowInfo)
 	CreateFrameResources();
 
 	// デプスステンシルバッファの作成
-	depthStencilBuffer = winrt::make_self<DepthStencilBuffer>(device.get(), windowInfo.width, windowInfo.height);
+	depthStencilBuffer = std::make_unique<DepthStencilBuffer>(device.get(), windowInfo.width, windowInfo.height);
 
 	// ルートシグネチャの作成
 	CreateRootSignature();
@@ -34,7 +38,7 @@ void RenderPipeline::Initialize(const WindowInfo& windowInfo)
 	WaitForFence();
 }
 
-void RenderPipeline::Update(const WindowInfo& windowInfo)
+void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 {
 	UINT backBufferIndex = renderTargetBuffer->GetBackBufferIndex();
 	// コマンドアロケータをリセット
@@ -69,7 +73,8 @@ void RenderPipeline::Update(const WindowInfo& windowInfo)
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	GraphicsContext context(commandList, windowInfo);
-	onRenderProcess(context);
+
+	onRenderProcess(context, *gpuConstants);
 
 	// バックバッファは画面更新に使用される
 	const D3D12_RESOURCE_BARRIER& barrier2RTPresent = renderTargetBuffer->GetResourceBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -122,21 +127,19 @@ void RenderPipeline::CreateDXGIFactory(winrt::com_ptr<IDXGIFactory6>& dxgiFactor
 
 void RenderPipeline::CreateRootSignature()
 {
-	rootSignature = winrt::make_self<RootSignature>();
-	rootSignature->Initialize(device.get(), std::vector<RootParameter>{
-		// CBV (Model + ViewProjection)
-		{ ParameterType::CBV, 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
-			// CBV (DirectionalLight)
-		{ ParameterType::CBV, 1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
-			// CBV (PointLight)
-		{ ParameterType::CBV, 2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
+	rootSignature = std::make_unique<RootSignature>();
+	rootSignature->Initialize(device.get(), std::vector<RootParameter>
+	{
+		{ ParameterType::CBV, RegisterType::PerFrame, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
+		{ ParameterType::CBV, RegisterType::PerTransform, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
+		{ ParameterType::CBV, RegisterType::PerMaterial, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
 	});
 }
 
 void RenderPipeline::CreateFrameResources()
 {
 	// レンダーターゲットバッファーの作成
-	renderTargetBuffer = winrt::make_self<RenderTargetBuffer>(device.get(), swapChain.get(), frameBufferCount);
+	renderTargetBuffer = std::make_unique<RenderTargetBuffer>(device.get(), swapChain.get(), frameBufferCount);
 
 	//コマンドアロケータを作成 
 	for (UINT i = 0; i < frameBufferCount; ++i)

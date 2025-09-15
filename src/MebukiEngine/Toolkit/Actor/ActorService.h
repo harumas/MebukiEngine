@@ -62,13 +62,24 @@ public:
 		}
 	}
 
-	void InvokeOnDraw(const GraphicsContext& context)
+	void InvokeOnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants)
 	{
 		auto valuesView = std::ranges::views::values(actors);
 
 		for (const auto& actor : valuesView)
 		{
-			actor->InvokeOnDraw(context);
+			actor->InvokeOnPreDraw(context, gpuConstants);
+		}
+	}
+
+
+	void InvokeOnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants)
+	{
+		auto valuesView = std::ranges::views::values(actors);
+
+		for (const auto& actor : valuesView)
+		{
+			actor->InvokeOnDraw(context, gpuConstants);
 		}
 	}
 

@@ -4,17 +4,14 @@
 class EngineService
 {
 public:
+	EngineService();
+
 	EngineService(const EngineService&) = delete;
 	EngineService& operator=(const EngineService&) = delete;
 	EngineService(EngineService&&) = delete;
 	EngineService& operator=(EngineService&&) = delete;
 
-	static EngineService& GetInstance()
-	{
-		static EngineService instance;
-		return instance;
-	}
-
+	// サービスを登録するメソッド
 	template<typename T, class... Args>
 	std::shared_ptr<T> Register(Args&&... args)
 	{
@@ -23,6 +20,7 @@ public:
 		return service;
 	}
 
+	//インスタンスを登録するメソッド 
 	template<typename T>
 	void RegisterInstance(std::shared_ptr<T> service)
 	{
@@ -46,7 +44,9 @@ public:
 	}
 
 private:
-	EngineService() = default;
-	~EngineService() = default;
 	std::unordered_map<std::type_index, std::shared_ptr<void>> services;
 };
+
+inline EngineService::EngineService()
+{
+}

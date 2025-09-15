@@ -14,18 +14,20 @@ struct PointLight
 
 cbuffer cbuff0 : register(b0)
 {
-    matrix world;
     matrix viewproj;
+    float3 cameraPos;
+    DirectionalLight directionalLight;
+    PointLight pointLight;
 }
 
 cbuffer cbuff1 : register(b1)
 {
-    DirectionalLight directionalLight;
+    matrix world;
 }
 
 cbuffer cbuff2 : register(b2)
 {
-    PointLight pointLight;
+    float4 baseColor;
 }
 
 struct PSInput
@@ -73,7 +75,6 @@ float4 PSMain(PSInput input) : SV_TARGET
     float4 finalColor = float4(float3(1, 1, 1) * light, 1);
 
     return finalColor;
-    
 }
 
 float3 CalcLambertDiffuse(float3 lightDirection, float3 lightColor, float3 normal)

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-class DepthStencilBuffer : public winrt::implements<DepthStencilBuffer, winrt::Windows::Foundation::IInspectable>
+class DepthStencilBuffer
 {
 public:
 	DepthStencilBuffer(ID3D12Device* device, UINT width, UINT height);

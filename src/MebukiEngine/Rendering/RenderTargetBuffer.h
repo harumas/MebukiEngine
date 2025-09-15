@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-class RenderTargetBuffer : public winrt::implements<RenderTargetBuffer, winrt::Windows::Foundation::IInspectable>
+class RenderTargetBuffer
 {
 public:
 	RenderTargetBuffer(ID3D12Device* device, IDXGISwapChain3* swapChain, UINT frameBufferCount);

@@ -56,3 +56,8 @@ const winrt::com_ptr<ID3D12PipelineState>& ShaderPass::GetPipelineState() const
 {
 	return pipelineState;
 }
+
+MaterialLayout& ShaderPass::GetLayout()
+{
+	return layout;
+}

@@ -7,4 +7,3 @@
 #include "RenderPipeline.h"
 #include "RenderTargetBuffer.h"
 #include "RootSignature.h"
-#include "ShaderPass.h"

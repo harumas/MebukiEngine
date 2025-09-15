@@ -42,7 +42,7 @@
     <ClInclude Include="Rendering\RootSignature.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\ShaderPass.h">
+    <ClInclude Include="Toolkit\Rendering\ShaderPass.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\PipelineTypes.h">
@@ -153,6 +153,21 @@
     <ClInclude Include="Toolkit\Mesh\StreamReader.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Rendering\RegisterType.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Toolkit\Rendering\MaterialLayout.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\ConstantBufferLayout.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\GpuConstants.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Toolkit\Rendering\MaterialHandler.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application\WinApplication.cpp">
@@ -167,7 +182,7 @@
     <ClCompile Include="Rendering\RootSignature.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Rendering\ShaderPass.cpp">
+    <ClCompile Include="Toolkit\Rendering\ShaderPass.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Rendering\RenderTargetBuffer.cpp">
@@ -234,6 +249,15 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Toolkit\Mesh\ModelLoader.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Toolkit\Rendering\MaterialLayout.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\GpuConstants.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Toolkit\Rendering\MaterialHandler.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

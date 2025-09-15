@@ -7,7 +7,9 @@
 class Renderer : public Component
 {
 public:
-	explicit Renderer(const std::shared_ptr<Actor>& actorRef) : Component(actorRef), material(nullptr)
+	explicit Renderer(const std::shared_ptr<Actor>& actorRef) :
+		Component(actorRef),
+		drawHandle(-1)
 	{
 	}
 
@@ -21,11 +23,12 @@ public:
 		this->material = material;
 	}
 
-	void OnDraw(const GraphicsContext& context) override;
+	void OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants) override;
+	void OnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants) override;
 
 private:
 	Mesh mesh;
 	Material material;
 
-	ConstantBuffer<Matrices> matrixBuffer;
+	UINT drawHandle;
 };
