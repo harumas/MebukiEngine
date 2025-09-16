@@ -17,7 +17,7 @@ Material::Material(uint32_t handleId, const std::shared_ptr<ShaderPass>& shaderP
 {
 }
 
-void Material::SetPass(const GraphicsContext& context) const
+void Material::SetPipelineState(const GraphicsContext& context) const
 {
 	if (shaderPass != nullptr)
 	{

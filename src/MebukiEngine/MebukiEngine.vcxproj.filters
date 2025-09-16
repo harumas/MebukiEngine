@@ -168,6 +168,9 @@
     <ClInclude Include="Toolkit\Rendering\MaterialHandler.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Toolkit\Rendering\Texture.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application\WinApplication.cpp">
@@ -258,6 +261,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Toolkit\Rendering\MaterialHandler.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Toolkit\Rendering\Texture.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

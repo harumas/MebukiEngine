@@ -31,7 +31,7 @@ void TestWorld::Initialize(const EngineService& engineService)
 	Material halfLambert = materialHandler->Create(halfLambertPass);
 
 	Mesh mesh;
-	mesh.Create("Assets/SampleModel.glb", D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	mesh.Create("Assets/croissant.glb", D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	std::shared_ptr<Renderer> renderer = cube->AddComponent<Renderer>();
 	renderer->SetMesh(mesh);

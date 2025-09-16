@@ -30,6 +30,11 @@ public:
 	// パイプラインステートオブジェクトをセットします
 	void SetPipelineState(ID3D12PipelineState* pipelineState) const;
 
+	// リソースバリアを設定します
+	void ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* barriers) const;
+
+	ID3D12GraphicsCommandList* GetCommandList() const;
+
 private:
 	winrt::com_ptr<ID3D12GraphicsCommandList> commandList;
 	float aspectRatio;

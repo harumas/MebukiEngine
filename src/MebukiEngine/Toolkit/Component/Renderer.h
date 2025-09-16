@@ -9,7 +9,8 @@ class Renderer : public Component
 public:
 	explicit Renderer(const std::shared_ptr<Actor>& actorRef) :
 		Component(actorRef),
-		drawHandle(-1)
+		isResourceUpdated(false),
+		transformHandle(-1)
 	{
 	}
 
@@ -29,6 +30,7 @@ public:
 private:
 	Mesh mesh;
 	Material material;
+	bool isResourceUpdated;
 
-	UINT drawHandle;
+	UINT transformHandle;
 };

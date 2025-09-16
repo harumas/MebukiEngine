@@ -8,7 +8,7 @@ class Material
 public:
 	Material();
 	Material(uint32_t uint32, const std::shared_ptr<ShaderPass>& shaderPass);
-	void SetPass(const GraphicsContext& context) const;
+	void SetPipelineState(const GraphicsContext& context) const;
 	void UploadPropertyData(GpuConstants& gpuConstants);
 
 	void SetFloat(const std::string& name, float value);

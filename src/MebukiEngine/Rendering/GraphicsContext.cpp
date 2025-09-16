@@ -40,3 +40,13 @@ void GraphicsContext::SetPipelineState(ID3D12PipelineState* pipelineState) const
 {
 	commandList->SetPipelineState(pipelineState);
 }
+
+void GraphicsContext::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* barriers) const
+{
+	commandList->ResourceBarrier(numBarriers, barriers);
+}
+
+ID3D12GraphicsCommandList* GraphicsContext::GetCommandList() const
+{
+	return commandList.get();
+}
