@@ -29,6 +29,12 @@ cbuffer cbuff2 : register(b2)
 {
     float4 baseColor;
 }
+ 
+// アルベド用テクスチャ
+Texture2D gTexture : register(t0);
+
+// サンプラー
+SamplerState gSampler : register(s0);
 
 struct PSInput
 {
@@ -52,6 +58,9 @@ PSInput VSMain(float4 pos : POSITION, float3 normal : NORMAL, float2 uv : TEXCOO
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
+    // UV座標からサンプリング
+    float4 color = gTexture.Sample(gSampler, input.uv);
+     
     float3 directionNormal = normalize(directionalLight.direction);
     float3 diffuseDirection = CalcLambertDiffuse(directionNormal, directionalLight.color, input.normal);
 
@@ -72,7 +81,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 
     // 拡散反射光と鏡面反射光を足し算して、最終的な光を求める
     float3 light = diffuse + directionalLight.ambientLight;
-    float4 finalColor = float4(float3(1, 1, 1) * light, 1);
+    float4 finalColor = float4(color * light, 1);
 
     return finalColor;
 }

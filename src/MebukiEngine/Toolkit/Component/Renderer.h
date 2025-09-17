@@ -11,18 +11,10 @@ public:
 		Component(actorRef),
 		isResourceUpdated(false),
 		transformHandle(-1)
-	{
-	}
+	{}
 
-	void SetMesh(const Mesh& mesh)
-	{
-		this->mesh = mesh;
-	}
-
-	void SetMaterial(const Material& material)
-	{
-		this->material = material;
-	}
+	void SetMesh(const Mesh& mesh);
+	void SetMaterial(const Material& material);
 
 	void OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants) override;
 	void OnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants) override;
@@ -31,6 +23,7 @@ private:
 	Mesh mesh;
 	Material material;
 	bool isResourceUpdated;
+	UINT shaderResourceHandle;
 
 	UINT transformHandle;
 };

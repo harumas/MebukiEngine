@@ -1,6 +1,16 @@
 ﻿#include "Renderer.h"
 #include "Camera.h"
 
+void Renderer::SetMesh(const Mesh& mesh)
+{
+	this->mesh = mesh;
+}
+
+void Renderer::SetMaterial(const Material& material)
+{
+	this->material = material;
+}
+
 void Renderer::OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants)
 {
 	// モデル行列を取得 
@@ -13,23 +23,27 @@ void Renderer::OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConsta
 
 	// Transform用の定数バッファに登録し、オフセットを取得
 	transformHandle = gpuConstants.AddTransformData(model4X4);
-}
 
-void Renderer::OnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants)
-{
 	// テクスチャデータをGPUに転送 
 	if (!isResourceUpdated && mesh.HasTexture())
 	{
 		Texture texture = mesh.GetMeshData().textureData;
 		texture.UpdateSubResources(context);
+		shaderResourceHandle = gpuConstants.CreateShaderResourceView(texture.GetTextureResource(), DXGI_FORMAT_R8G8B8A8_UNORM);
 		isResourceUpdated = true;
 	}
+}
 
+void Renderer::OnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants)
+{
 	// 現在のTransformに定数バッファのオフセットを設定
 	gpuConstants.SetTransformCBV(context, transformHandle);
 
 	// 現在のMaterialに定数バッファのオフセットを設定
 	gpuConstants.SetMaterialCBV(context, material.GetHandleId());
+
+	// ShaderResourceViewのハンドルをセット 
+	gpuConstants.SetGraphicsRootDescriptorTable(context, shaderResourceHandle);
 
 	// PipelineStateを設定
 	material.SetPipelineState(context);

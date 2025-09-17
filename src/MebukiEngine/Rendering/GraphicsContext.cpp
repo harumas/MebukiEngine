@@ -10,6 +10,11 @@ void GraphicsContext::SetGraphicsRootConstantBufferView(UINT rootParameter, D3D1
 	commandList->SetGraphicsRootConstantBufferView(rootParameter, address);
 }
 
+void GraphicsContext::SetGraphicsRootDescriptorTable(UINT rootParameter, D3D12_GPU_DESCRIPTOR_HANDLE handle) const
+{
+	commandList->SetGraphicsRootDescriptorTable(rootParameter, handle);
+}
+
 void GraphicsContext::SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology) const
 {
 	commandList->IASetPrimitiveTopology(topology);

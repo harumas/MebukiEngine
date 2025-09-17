@@ -1,13 +1,15 @@
 ﻿#include "GpuConstants.h"
 #include "RegisterType.h"
 
-GpuConstants::GpuConstants() :
+GpuConstants::GpuConstants(ID3D12Device* device) :
 	frameData(),
 	transformData(),
 	frameCB(RegisterType::PerFrame),
 	transformCB(RegisterType::PerTransform),
-	materialCB(RegisterType::PerMaterial)
+	materialCB(RegisterType::PerMaterial),
+	shaderResourceBuffer(device)
 {
+	descriptorHeaps.emplace_back(shaderResourceBuffer.GetDescriptorHeap());
 }
 
 void GpuConstants::SetCameraFrameData(const CameraFrameData& cameraFrameData)
@@ -70,6 +72,22 @@ void GpuConstants::SetTransformCBV(const GraphicsContext& context, UINT drawHand
 void GpuConstants::SetMaterialCBV(const GraphicsContext& context, uint32_t materialHandle) const
 {
 	materialCB.SetRootConstantBufferView(context, materialHandle);
+}
+
+UINT GpuConstants::CreateShaderResourceView(ID3D12Resource* resource, DXGI_FORMAT format)
+{
+	return  shaderResourceBuffer.CreateShaderResourceView(resource, format);
+}
+
+void GpuConstants::SetGraphicsRootDescriptorTable(const GraphicsContext& context, UINT offset) const
+{
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = shaderResourceBuffer.GetGPUDescriptorHandle(offset);
+	context.SetGraphicsRootDescriptorTable(0, gpuHandle);
+}
+
+const std::vector<ID3D12DescriptorHeap*>& GpuConstants::GetDescriptorHeaps() const
+{
+	return descriptorHeaps;
 }
 
 void GpuConstants::Reset()

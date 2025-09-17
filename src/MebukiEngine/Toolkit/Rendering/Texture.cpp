@@ -36,3 +36,8 @@ void Texture::UpdateSubResources(const GraphicsContext& context)
 
 	context.ResourceBarrier(1, &transition);
 }
+
+ID3D12Resource* Texture::GetTextureResource()
+{
+	return textureResource.get();
+}

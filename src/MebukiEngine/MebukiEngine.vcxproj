@@ -138,6 +138,7 @@
     <ClInclude Include="Rendering\ConstantBufferLayout.h" />
     <ClInclude Include="Rendering\GpuConstants.h" />
     <ClInclude Include="Rendering\RegisterType.h" />
+    <ClInclude Include="Rendering\ShaderResourceBuffer.h" />
     <ClInclude Include="Toolkit\Rendering\MaterialHandler.h" />
     <ClInclude Include="Toolkit\Mesh\ModelLoader.h" />
     <ClInclude Include="Toolkit\Component\DirectionalLight.h" />
@@ -192,6 +193,7 @@
     <ClCompile Include="Application\GameApplication.cpp" />
     <ClCompile Include="Basic\UID.cpp" />
     <ClCompile Include="Rendering\GpuConstants.cpp" />
+    <ClCompile Include="Rendering\ShaderResourceBuffer.cpp" />
     <ClCompile Include="Toolkit\Rendering\MaterialHandler.cpp" />
     <ClCompile Include="Toolkit\Mesh\ModelLoader.cpp" />
     <ClCompile Include="Toolkit\Component\DirectionalLight.cpp" />
