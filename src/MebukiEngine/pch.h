@@ -38,6 +38,8 @@ using namespace DirectX;
 #include <typeindex>
 #include <tchar.h>
 
+#pragma comment(lib, "windowsapp.lib") 
+
 // DirectX
 #pragma comment( lib, "dxgi.lib" )
 #pragma comment( lib, "d3d12.lib" )
