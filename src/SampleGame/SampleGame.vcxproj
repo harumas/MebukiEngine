@@ -28,6 +28,7 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="ShaderPass\HalfLambertPass.h" />
+    <ClInclude Include="ShaderPass\SkyboxPass.h" />
     <ClInclude Include="TestWorld.h" />
   </ItemGroup>
   <ItemGroup>
@@ -37,6 +38,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\..\Downloads\sky_14_2k\sky_14_2k.png" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

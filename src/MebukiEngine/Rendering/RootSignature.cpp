@@ -9,14 +9,14 @@ void RootSignature::Initialize(ID3D12Device* device, const std::vector<RootParam
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = GetFeatureData(device);
 
 	// RootParameterの作成
-	std::vector<CD3DX12_ROOT_PARAMETER1> dxRootParameters = CreateRootParameters(rootParameters);
+	RootParamData dxRootParameters = CreateRootParameters(rootParameters);
 
 	// サンプラーの生成
 	// テクスチャデータからどう色を取り出すかを決めるための設定
 	CD3DX12_STATIC_SAMPLER_DESC samplerDesc = CD3DX12_STATIC_SAMPLER_DESC(0);
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-	rootSignatureDesc.Init_1_1(dxRootParameters.size(), dxRootParameters.data(), 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	rootSignatureDesc.Init_1_1(dxRootParameters.rootParams.size(), dxRootParameters.rootParams.data(), 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	winrt::com_ptr<ID3DBlob> errorBlob;
 	winrt::com_ptr<ID3DBlob> serializedRootSignature;
@@ -49,15 +49,14 @@ D3D12_FEATURE_DATA_ROOT_SIGNATURE RootSignature::GetFeatureData(ID3D12Device* de
 	return featureVersion;
 }
 
-std::vector<CD3DX12_ROOT_PARAMETER1> RootSignature::CreateRootParameters(const std::vector<RootParameter>& rootParameters)
+RootSignature::RootParamData RootSignature::CreateRootParameters(const std::vector<RootParameter>& rootParameters)
 {
-	std::vector<CD3DX12_DESCRIPTOR_RANGE1> ranges(rootParameters.size());
-	std::vector<CD3DX12_ROOT_PARAMETER1> rootParams;
+	RootParamData paramData(rootParameters.size());
 
 	for (size_t i = 0; i < rootParameters.size(); ++i)
 	{
 		const RootParameter& rootParameter = rootParameters[i];
-		CD3DX12_DESCRIPTOR_RANGE1& range = ranges[i];
+		CD3DX12_DESCRIPTOR_RANGE1& range = paramData.ranges[i];
 		CD3DX12_ROOT_PARAMETER1 rootParam;
 
 		switch (rootParameter.type)
@@ -102,8 +101,8 @@ std::vector<CD3DX12_ROOT_PARAMETER1> RootSignature::CreateRootParameters(const s
 			break;
 		}
 
-		rootParams.push_back(rootParam);
+		paramData.rootParams.push_back(rootParam);
 	}
 
-	return rootParams;
+	return paramData;
 }

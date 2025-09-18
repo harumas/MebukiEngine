@@ -25,7 +25,10 @@ UINT ShaderResourceBuffer::CreateShaderResourceView(ID3D12Resource* resource, DX
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = format; // 例: DXGI_FORMAT_R8G8B8A8_UNORM
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = 0;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = static_cast<UINT>(-1);
+	srvDesc.Texture2D.PlaneSlice = 0;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE handle = cpuHandle;
 	handle.ptr += resourceCount * descriptorSize; // スロット0番に書き込む

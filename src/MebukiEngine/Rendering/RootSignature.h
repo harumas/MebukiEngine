@@ -10,11 +10,8 @@ struct RootParameter
 	D3D12_SHADER_VISIBILITY visibility;
 	bool asTable;
 
-	union
-	{
-		D3D12_DESCRIPTOR_RANGE_FLAGS rangeFlag;
-		D3D12_ROOT_DESCRIPTOR_FLAGS descFlag;
-	};
+	D3D12_DESCRIPTOR_RANGE_FLAGS rangeFlag = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+	D3D12_ROOT_DESCRIPTOR_FLAGS descFlag = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
 };
 
 class RootSignature
@@ -25,8 +22,15 @@ public:
 	ID3D12RootSignature* Get() const;
 
 private:
+	struct RootParamData
+	{
+		RootParamData(size_t rangesSize) : ranges(rangesSize) {}
+		std::vector<CD3DX12_DESCRIPTOR_RANGE1> ranges;
+		std::vector<CD3DX12_ROOT_PARAMETER1> rootParams;
+	};
+
 	winrt::com_ptr<ID3D12RootSignature> rootSignature;
 
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE GetFeatureData(ID3D12Device* device);
-	std::vector<CD3DX12_ROOT_PARAMETER1> CreateRootParameters(const std::vector<RootParameter>& rootParameters);
+	RootParamData CreateRootParameters(const std::vector<RootParameter>& rootParameters);
 };

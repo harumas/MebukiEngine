@@ -33,13 +33,13 @@ public:
 	void Reset();
 
 private:
-	FrameCB frameData;
-	TransformCB transformData;
+	FrameData frameData;
+	TransformArray transformData;
 	UINT transformCount = 0;
 
-	ConstantBuffer<FrameCB> frameCB;
-	ConstantBuffer<TransformCB> transformCB;
-	ConstantBuffer<MaterialCB> materialCB;
+	ConstantBuffer<FrameData> frameCB;
+	ConstantBuffer<TransformData> transformCB;
+	ConstantBuffer<MaterialPropertyData> materialCB;
 	ShaderResourceBuffer shaderResourceBuffer;
 	std::vector<ID3D12DescriptorHeap*> descriptorHeaps;
 };

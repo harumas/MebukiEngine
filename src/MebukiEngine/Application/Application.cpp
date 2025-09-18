@@ -36,7 +36,6 @@ int Application::Process(const WindowInfo& windowInfo)
 	// ワールドの更新
 	currentWorld->Update();
 
-
 	// フレームのレンダリング
 	renderPipeline.RenderFrame(windowInfo);
 
@@ -54,11 +53,11 @@ void Application::Render(const GraphicsContext& context, GpuConstants& gpuConsta
 	// Componentの更新
 	actorService->InvokeOnUpdate();
 
-	// TransformCBの定数バッファを転送
-	gpuConstants.UploadTransformBuffer();
-
 	// 描画前の更新処理(カメラ, ライト etc...) 
 	actorService->InvokeOnPreDraw(context, gpuConstants);
+
+	// TransformCBの定数バッファを転送
+	gpuConstants.UploadTransformBuffer();
 
 	// FrameCBの定数バッファの転送とセット
 	gpuConstants.UploadFrameBuffer();

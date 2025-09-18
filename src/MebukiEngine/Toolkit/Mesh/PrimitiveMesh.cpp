@@ -13,14 +13,12 @@ Mesh PrimitiveMesh::CreateSimpleTriangle()
 	const std::vector<unsigned short> indices = {
 		0,1,2
 	};
-	Mesh mesh;
-	mesh.Create(vertices, indices, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	Mesh mesh(vertices, indices, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	return mesh;
 }
 
 Mesh PrimitiveMesh::CreateCube(float size)
 {
-	using namespace DirectX;
 	const float h = size * 0.5f;
 
 	// 頂点データ
@@ -78,8 +76,7 @@ Mesh PrimitiveMesh::CreateCube(float size)
 		20,21,22, 20,22,23
 	};
 
-	Mesh mesh;
-	mesh.Create(vertices, indices, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	Mesh mesh(vertices, indices, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	return mesh;
 }
 

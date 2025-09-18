@@ -1,6 +1,14 @@
 ﻿#include "Renderer.h"
 #include "Camera.h"
 
+Renderer::Renderer(const std::shared_ptr<Actor>& actorRef) :
+	Component(actorRef),
+	isResourceUpdated(false),
+	shaderResourceHandle(-1),
+	transformHandle(-1)
+{
+}
+
 void Renderer::SetMesh(const Mesh& mesh)
 {
 	this->mesh = mesh;
@@ -17,19 +25,26 @@ void Renderer::OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConsta
 	const DirectX::XMMATRIX modelMatrix = gameObject.lock()->GetComponent<Transform>()->GetMatrix();
 
 	// HLSL側で受け取れるレイアウトに変換
-	// XMMATRIXは行優先、HLSLは列優先のため、転置してから変換する
 	XMFLOAT4X4 model4X4;
-	XMStoreFloat4x4(&model4X4, XMMatrixTranspose(modelMatrix));
+	XMStoreFloat4x4(&model4X4, modelMatrix);
 
 	// Transform用の定数バッファに登録し、オフセットを取得
 	transformHandle = gpuConstants.AddTransformData(model4X4);
 
 	// テクスチャデータをGPUに転送 
-	if (!isResourceUpdated && mesh.HasTexture())
+	if (!isResourceUpdated)
 	{
-		Texture texture = mesh.GetMeshData().textureData;
-		texture.UpdateSubResources(context);
-		shaderResourceHandle = gpuConstants.CreateShaderResourceView(texture.GetTextureResource(), DXGI_FORMAT_R8G8B8A8_UNORM);
+		if (!material.GetTexturePath().empty())
+		{
+			texture.Create(context, material.GetTexturePath());
+			shaderResourceHandle = gpuConstants.CreateShaderResourceView(texture.GetTextureResource(), DXGI_FORMAT_R8G8B8A8_UNORM);
+		}
+		else if (mesh.HasTexture())
+		{
+			texture.Create(context, mesh.GetMeshData().textureBytes);
+			shaderResourceHandle = gpuConstants.CreateShaderResourceView(texture.GetTextureResource(), DXGI_FORMAT_R8G8B8A8_UNORM);
+		}
+
 		isResourceUpdated = true;
 	}
 }
@@ -43,7 +58,10 @@ void Renderer::OnDraw(const GraphicsContext& context, const GpuConstants& gpuCon
 	gpuConstants.SetMaterialCBV(context, material.GetHandleId());
 
 	// ShaderResourceViewのハンドルをセット 
-	gpuConstants.SetGraphicsRootDescriptorTable(context, shaderResourceHandle);
+	if (shaderResourceHandle != -1)
+	{
+		gpuConstants.SetGraphicsRootDescriptorTable(context, shaderResourceHandle);
+	}
 
 	// PipelineStateを設定
 	material.SetPipelineState(context);

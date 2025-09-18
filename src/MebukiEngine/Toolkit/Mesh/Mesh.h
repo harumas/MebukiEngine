@@ -12,11 +12,11 @@ class Mesh
 {
 public:
 	Mesh();
-	void Create(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology);
-	void Create(std::vector<Vertex> vertices, std::vector<uint16_t> indices, D3D12_PRIMITIVE_TOPOLOGY topology);
+	Mesh(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology);
+	Mesh(std::vector<Vertex> vertices, std::vector<uint16_t> indices, D3D12_PRIMITIVE_TOPOLOGY topology);
 
 	bool HasTexture() const;
-	const MeshData& GetMeshData() { return meshData; }
+	MeshData& GetMeshData() { return meshData; }
 	D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() { return vertexBufferView; }
 	D3D12_INDEX_BUFFER_VIEW& GetIndexBufferView() { return indexBufferView; }
 
@@ -30,5 +30,4 @@ private:
 
 	void CreateVertexBuffer(const std::vector<Vertex>& vertices);
 	void CreateIndexBuffer(const void* indices, size_t count, bool use32bit);
-	Texture CreateTexture(const uint8_t* dataPtr, size_t dataSize);
 };

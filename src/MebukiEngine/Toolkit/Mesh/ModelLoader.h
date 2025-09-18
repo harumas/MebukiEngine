@@ -24,7 +24,7 @@ private:
 		std::vector<uint32_t> indices32;
 		bool use32bitIndex = false;
 
-		TextureHandle texture = { nullptr,0 };
+		std::vector<uint8_t> textureBytes;
 	};
 
 	std::vector<Vertex> ConvertVertices(const BinaryData& binaryData);

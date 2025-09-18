@@ -22,7 +22,7 @@ MeshData ModelLoader::Load(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY top
 		meshData.indices16 = std::move(data.indices16);
 	}
 
-	meshData.texHandle = data.texture;
+	meshData.textureBytes = data.textureBytes;
 
 	return meshData;
 }
@@ -139,12 +139,7 @@ ModelLoader::BinaryData ModelLoader::LoadBinary(const std::string& path)
 		const Microsoft::glTF::BufferView& view = document.bufferViews.Get(image.bufferViewId);
 
 		// resources から実データにアクセス
-		const std::vector<uint8_t>& bufferData = resourceReader->ReadBinaryData<uint8_t>(document, view);
-
-		const uint8_t* dataPtr = bufferData.data();
-		const size_t dataSize = view.byteLength;
-
-		binaryData.texture = { dataPtr, dataSize };
+		binaryData.textureBytes = resourceReader->ReadBinaryData<uint8_t>(document, view);
 	}
 
 	return binaryData;

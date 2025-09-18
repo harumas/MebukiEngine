@@ -1,7 +1,8 @@
 #pragma once
 
-// Constant Bufferの制限は64KB(65536バイト)なので、最大4096個の描画までサポート
-constexpr auto MAX_RENDERING_COUNT = 4096;
+// モデル行列(64バイト) + Padding(192バイト) = 256バイト
+// Constant Bufferの制限は64KB(65536バイト)なので、最大256個の描画までサポート
+constexpr auto MAX_RENDERING_COUNT = 256;
 
 // 1マテリアルあたり256バイトまで
 constexpr auto MAX_SHADER_PROPERTY_SIZE = 256;
@@ -29,19 +30,25 @@ struct PointLightFrameData
 	alignas(16)	float radius;
 };
 
-struct FrameCB
+struct alignas(256) FrameData
 {
 	CameraFrameData    cameraData;
 	DirectionalLightFrameData directionalLightData;
 	PointLightFrameData pointLightData;
 };
 
-struct TransformCB
+struct alignas(256) TransformData
 {
-	DirectX::XMFLOAT4X4 world[MAX_RENDERING_COUNT];
+	DirectX::XMFLOAT4X4 world;
 };
 
-struct MaterialCB
+struct TransformArray
 {
-	uint8_t data[MAX_SHADER_PROPERTY_SIZE * MAX_MATERIAL_COUNT];
+	TransformData transforms[MAX_RENDERING_COUNT];
+};
+
+
+struct alignas(256)  MaterialPropertyData
+{
+	uint8_t data[MAX_SHADER_PROPERTY_SIZE];
 };

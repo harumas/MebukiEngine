@@ -7,11 +7,7 @@
 class Renderer : public Component
 {
 public:
-	explicit Renderer(const std::shared_ptr<Actor>& actorRef) :
-		Component(actorRef),
-		isResourceUpdated(false),
-		transformHandle(-1)
-	{}
+	explicit Renderer(const std::shared_ptr<Actor>& actorRef);
 
 	void SetMesh(const Mesh& mesh);
 	void SetMaterial(const Material& material);
@@ -22,6 +18,7 @@ public:
 private:
 	Mesh mesh;
 	Material material;
+	Texture texture;
 	bool isResourceUpdated;
 	UINT shaderResourceHandle;
 

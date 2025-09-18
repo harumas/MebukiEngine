@@ -4,9 +4,9 @@
 GpuConstants::GpuConstants(ID3D12Device* device) :
 	frameData(),
 	transformData(),
-	frameCB(RegisterType::PerFrame),
-	transformCB(RegisterType::PerTransform),
-	materialCB(RegisterType::PerMaterial),
+	frameCB(RegisterType::PerFrame, 1),
+	transformCB(RegisterType::PerTransform, MAX_RENDERING_COUNT),
+	materialCB(RegisterType::PerMaterial, MAX_RENDERING_COUNT),
 	shaderResourceBuffer(device)
 {
 	descriptorHeaps.emplace_back(shaderResourceBuffer.GetDescriptorHeap());
@@ -26,7 +26,7 @@ UINT GpuConstants::AddTransformData(const XMFLOAT4X4& transformData)
 {
 	if (transformCount < MAX_RENDERING_COUNT)
 	{
-		this->transformData.world[transformCount] = transformData;
+		this->transformData.transforms[transformCount] = TransformData(transformData);
 
 		// 現在のインデックスを返してからインクリメント
 		return transformCount++;
@@ -43,20 +43,21 @@ void GpuConstants::SetPointLightFrameData(const PointLightFrameData& pointLightF
 
 void GpuConstants::UploadFrameBuffer()
 {
-	frameCB.UploadBufferData(frameData);
+	frameCB.UploadBufferData(&frameData);
 }
 
 void GpuConstants::UploadTransformBuffer()
 {
-	transformCB.UploadBufferData(transformData);
+	transformCB.UploadBufferData(&transformData);
 }
 
 void GpuConstants::UploadMaterialBuffer(const void* buffer, size_t bufferSize, uint32_t offset)
 {
 	// マテリアル単位のオフセットをバイト単位に変換する 
-	uint32_t byteOffset = offset * MAX_SHADER_PROPERTY_SIZE;
+	UINT alignedSize = (bufferSize + 255) & ~255; // 256切り上げ
+	uint32_t byteOffset = offset * alignedSize;
 
-	materialCB.UploadBufferData(buffer, bufferSize, byteOffset);
+	materialCB.UploadBufferData(buffer, alignedSize, byteOffset);
 }
 
 void GpuConstants::SetFrameCBV(const GraphicsContext& context) const
@@ -76,13 +77,13 @@ void GpuConstants::SetMaterialCBV(const GraphicsContext& context, uint32_t mater
 
 UINT GpuConstants::CreateShaderResourceView(ID3D12Resource* resource, DXGI_FORMAT format)
 {
-	return  shaderResourceBuffer.CreateShaderResourceView(resource, format);
+	return shaderResourceBuffer.CreateShaderResourceView(resource, format);
 }
 
 void GpuConstants::SetGraphicsRootDescriptorTable(const GraphicsContext& context, UINT offset) const
 {
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = shaderResourceBuffer.GetGPUDescriptorHandle(offset);
-	context.SetGraphicsRootDescriptorTable(0, gpuHandle);
+	context.SetGraphicsRootDescriptorTable(RegisterType::SRV, gpuHandle);
 }
 
 const std::vector<ID3D12DescriptorHeap*>& GpuConstants::GetDescriptorHeaps() const

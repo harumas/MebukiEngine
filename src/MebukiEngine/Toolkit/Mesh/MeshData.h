@@ -10,12 +10,6 @@ struct Vertex
 	DirectX::XMFLOAT4 Color; // 頂点色
 };
 
-struct TextureHandle
-{
-	const uint8_t* dataPtr;
-	size_t dataSize;
-};
-
 struct MeshData
 {
 	std::vector<Vertex> vertices;
@@ -25,6 +19,6 @@ struct MeshData
 
 	D3D12_PRIMITIVE_TOPOLOGY topology = D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	TextureHandle texHandle = { nullptr,0 };
+	std::vector<uint8_t> textureBytes;
 	Texture textureData;
 };

@@ -110,6 +110,16 @@ void Material::SetInt(const std::string& name, int value)
 	throw std::runtime_error("Parameter type mismatch in Material::SetInt");
 }
 
+void Material::SetTexturePath(const std::wstring& path)
+{
+	overrideTexturePath = path;
+}
+
+const std::wstring& Material::GetTexturePath() const
+{
+	return overrideTexturePath;
+}
+
 uint32_t Material::GetHandleId()
 {
 	return handleId;

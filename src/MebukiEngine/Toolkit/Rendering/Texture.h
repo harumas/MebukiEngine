@@ -4,12 +4,13 @@
 class Texture
 {
 public:
-	void SetResources(winrt::com_ptr<ID3D12Resource> tex, winrt::com_ptr<ID3D12Resource> upload, std::vector<D3D12_SUBRESOURCE_DATA> subs);
-	void UpdateSubResources(const GraphicsContext& context);
+	void Create(const GraphicsContext& context, const std::wstring& path);
+	void Create(const GraphicsContext& context, const std::vector<uint8_t>& byteData);
 	ID3D12Resource* GetTextureResource();
 
 private:
+	void CreateUploadResources(const GraphicsContext& context, const DirectX::ScratchImage& scratch, const DirectX::TexMetadata& metadata);
+
 	winrt::com_ptr<ID3D12Resource> textureResource = nullptr;
 	winrt::com_ptr<ID3D12Resource> uploadHeap = nullptr;
-	std::vector<D3D12_SUBRESOURCE_DATA> subResources;
 };
