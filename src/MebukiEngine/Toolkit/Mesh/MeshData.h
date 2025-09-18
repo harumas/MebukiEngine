@@ -1,4 +1,5 @@
 #pragma once
+#include "Toolkit/Rendering/Texture.h"
 
 struct Vertex
 {
@@ -15,5 +16,9 @@ struct MeshData
 	std::vector<uint16_t> indices16;
 	std::vector<uint32_t> indices32;
 	bool use32bitIndex = false;
+
 	D3D12_PRIMITIVE_TOPOLOGY topology = D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	std::vector<uint8_t> textureBytes;
+	Texture textureData;
 };

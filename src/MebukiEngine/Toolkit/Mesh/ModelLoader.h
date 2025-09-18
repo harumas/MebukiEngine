@@ -14,6 +14,7 @@ public:
 	MeshData Load(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology);
 
 private:
+
 	struct BinaryData
 	{
 		std::vector<float> positions;
@@ -22,6 +23,8 @@ private:
 		std::vector<uint16_t> indices16;
 		std::vector<uint32_t> indices32;
 		bool use32bitIndex = false;
+
+		std::vector<uint8_t> textureBytes;
 	};
 
 	std::vector<Vertex> ConvertVertices(const BinaryData& binaryData);

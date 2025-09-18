@@ -1,18 +1,20 @@
 ﻿#include "Mesh.h"
 #include "ModelLoader.h"
+#include "Rendering/GraphicsDevice.h"
 
 Mesh::Mesh()
 {
-
 }
 
-void Mesh::Create(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology)
+Mesh::Mesh(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology)
 {
 	ModelLoader loader;
 	meshData = loader.Load(path, topology);
 
+	//頂点バッファの作成 
 	CreateVertexBuffer(meshData.vertices);
 
+	//インデックスバッファの作成
 	const void* indicesData = meshData.use32bitIndex
 		? static_cast<const void*>(meshData.indices32.data())
 		: static_cast<const void*>(meshData.indices16.data());
@@ -20,7 +22,7 @@ void Mesh::Create(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology)
 	CreateIndexBuffer(indicesData, indicesCount, meshData.use32bitIndex);
 }
 
-void Mesh::Create(std::vector<Vertex> vertices, std::vector<uint16_t> indices, D3D12_PRIMITIVE_TOPOLOGY topology)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<uint16_t> indices, D3D12_PRIMITIVE_TOPOLOGY topology)
 {
 	meshData.vertices = std::move(vertices);
 	meshData.indices16 = std::move(indices);
@@ -29,6 +31,11 @@ void Mesh::Create(std::vector<Vertex> vertices, std::vector<uint16_t> indices, D
 
 	CreateVertexBuffer(meshData.vertices);
 	CreateIndexBuffer(meshData.indices16.data(), meshData.indices16.size(), false);
+}
+
+bool Mesh::HasTexture() const
+{
+	return meshData.textureBytes.size() > 0;
 }
 
 void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)

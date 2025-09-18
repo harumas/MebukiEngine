@@ -1,7 +1,5 @@
 #include "ModelLoader.h"
 
-#include <iostream>
-
 #include "MeshData.h"
 #include "StreamReader.h"
 
@@ -13,6 +11,7 @@ MeshData ModelLoader::Load(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY top
 	MeshData meshData;
 	meshData.vertices = ConvertVertices(data);
 	meshData.topology = topology;
+	meshData.use32bitIndex = data.use32bitIndex;
 
 	if (data.use32bitIndex)
 	{
@@ -22,6 +21,8 @@ MeshData ModelLoader::Load(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY top
 	{
 		meshData.indices16 = std::move(data.indices16);
 	}
+
+	meshData.textureBytes = data.textureBytes;
 
 	return meshData;
 }
@@ -127,6 +128,18 @@ ModelLoader::BinaryData ModelLoader::LoadBinary(const std::string& path)
 		{
 			throw std::runtime_error("Unsupported index component type");
 		}
+	}
+
+	// テクスチャ読み込み (最初の画像のみ対応)
+	if (!document.images.Elements().empty())
+	{
+		const Microsoft::glTF::Image& image = document.images.Elements().front(); // 例: 最初の画像
+
+		// bufferViewIdから対応するBufferViewを取得
+		const Microsoft::glTF::BufferView& view = document.bufferViews.Get(image.bufferViewId);
+
+		// resources から実データにアクセス
+		binaryData.textureBytes = resourceReader->ReadBinaryData<uint8_t>(document, view);
 	}
 
 	return binaryData;

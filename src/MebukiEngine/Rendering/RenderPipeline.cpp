@@ -13,7 +13,7 @@ void RenderPipeline::Initialize(const WindowInfo& windowInfo)
 	GraphicsDevice::Bind(device);
 
 	// GPU定数バッファの作成
-	gpuConstants = std::make_unique<GpuConstants>();
+	gpuConstants = std::make_unique<GpuConstants>(device.get());
 
 	// コマンドキューの作成
 	CreateCommandQueue();
@@ -59,6 +59,10 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 
 	// ルートシグネチャをセット 
 	commandList->SetGraphicsRootSignature(rootSignature->Get());
+
+	// ディスクリプタヒープをセット 
+	const auto heaps = gpuConstants->GetDescriptorHeaps();
+	commandList->SetDescriptorHeaps(heaps.size(), heaps.data());
 
 	// レンダーターゲットをセット
 	const D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle = renderTargetBuffer->GetRTVHandle();
@@ -133,6 +137,7 @@ void RenderPipeline::CreateRootSignature()
 		{ ParameterType::CBV, RegisterType::PerFrame, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
 		{ ParameterType::CBV, RegisterType::PerTransform, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
 		{ ParameterType::CBV, RegisterType::PerMaterial, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
+		{ ParameterType::SRV, 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_PIXEL, true, D3D12_DESCRIPTOR_RANGE_FLAG_NONE },
 	});
 }
 

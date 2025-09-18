@@ -1,6 +1,7 @@
 #pragma once
 #include "TestWorld.h"
 #include "ShaderPass/HalfLambertPass.h"
+#include "ShaderPass/SkyboxPass.h"
 #include "Toolkit/Component/DirectionalLight.h"
 #include "Toolkit/Rendering/MaterialHandler.h"
 
@@ -22,24 +23,66 @@ void TestWorld::Initialize(const EngineService& engineService)
 
 	std::shared_ptr<Camera> camera = cameraActor->AddComponent<Camera>();
 
-	cube = actorService->Create(L"TestActor");
-
 	auto shaderPassPool = engineService.Resolve<ShaderPassPool>();
-	auto halfLambertPass = shaderPassPool->GetShaderPass<HalfLambertPass>();
-
 	auto materialHandler = engineService.Resolve<MaterialHandler>();
-	Material halfLambert = materialHandler->Create(halfLambertPass);
 
-	Mesh mesh;
-	mesh.Create("Assets/SampleModel.glb", D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//　クロワッサンの描画
+	{
+		cube = actorService->Create(L"TestActor");
 
-	std::shared_ptr<Renderer> renderer = cube->AddComponent<Renderer>();
-	renderer->SetMesh(mesh);
-	renderer->SetMaterial(halfLambert);
+		auto halfLambertPass = shaderPassPool->GetShaderPass<HalfLambertPass>();
+		Material halfLambert = materialHandler->Create(halfLambertPass);
+
+		Mesh croissantMesh("Assets/croissant.glb", D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		std::shared_ptr<Renderer> renderer = cube->AddComponent<Renderer>();
+		renderer->SetMesh(croissantMesh);
+		renderer->SetMaterial(halfLambert);
+
+		auto transform = cube->GetComponent<Transform>();
+
+		transform->rotation.z = XM_PIDIV2;
+		transform->rotation.y = XM_PI * 0.85f;
+		transform->rotation.x = -XM_PIDIV2;
+
+		transform->scale = Vec3(0.5f, 0.5f, 0.5f);
+
+		transform->position.y = -0.5f;
+
+	}
+
+	//　球体の描画
+	{
+		//acube = actorService->Create(L"Cube");
+
+		//auto halfLambertPass = shaderPassPool->GetShaderPass<HalfLambertPass>();
+		//Material halfLambert = materialHandler->Create(halfLambertPass);
+
+		//std::shared_ptr<Renderer> renderer = acube->AddComponent<Renderer>();
+		//renderer->SetMesh(PrimitiveMesh::CreateCube());
+		//renderer->SetMaterial(halfLambert);
+
+		//acube->GetComponent<Transform>()->position.x += 1;
+	}
+
+	// スカイボックスの描画
+	{
+		auto skyboxPass = shaderPassPool->GetShaderPass<SkyboxPass>();
+		Material skyBox = materialHandler->Create(skyboxPass);
+		skyBox.SetTexturePath(L"Assets/sky_14_2k.png");
+
+		Mesh skyboxMesh("Assets/skybox.glb", D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		auto skyboxActor = actorService->Create(L"Skybox");
+		skyboxActor->GetComponent<Transform>()->scale = Vec3(300.0f, 300.0f, 300.0f);
+
+		std::shared_ptr<Renderer> skyboxRenderer = skyboxActor->AddComponent<Renderer>();
+		skyboxRenderer->SetMesh(skyboxMesh);
+		skyboxRenderer->SetMaterial(skyBox);
+	}
 }
 
 void TestWorld::Update()
 {
-	cube->GetComponent<Transform>()->rotation.y += 0.01f;
 }
 

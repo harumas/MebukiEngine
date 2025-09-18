@@ -7,21 +7,10 @@
 class Renderer : public Component
 {
 public:
-	explicit Renderer(const std::shared_ptr<Actor>& actorRef) :
-		Component(actorRef),
-		drawHandle(-1)
-	{
-	}
+	explicit Renderer(const std::shared_ptr<Actor>& actorRef);
 
-	void SetMesh(const Mesh& mesh)
-	{
-		this->mesh = mesh;
-	}
-
-	void SetMaterial(const Material& material)
-	{
-		this->material = material;
-	}
+	void SetMesh(const Mesh& mesh);
+	void SetMaterial(const Material& material);
 
 	void OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants) override;
 	void OnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants) override;
@@ -29,6 +18,9 @@ public:
 private:
 	Mesh mesh;
 	Material material;
+	Texture texture;
+	bool isResourceUpdated;
+	UINT shaderResourceHandle;
 
-	UINT drawHandle;
+	UINT transformHandle;
 };

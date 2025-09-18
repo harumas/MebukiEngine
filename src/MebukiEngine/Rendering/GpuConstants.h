@@ -1,10 +1,11 @@
 ﻿#pragma once
 #include "ConstantBuffer.h"
+#include "ShaderResourceBuffer.h"
 
 class GpuConstants
 {
 public:
-	explicit GpuConstants();
+	explicit GpuConstants(ID3D12Device* device);
 
 	// フレームの定数バッファにデータをセットする関数
 	void SetCameraFrameData(const CameraFrameData& cameraFrameData);
@@ -24,14 +25,21 @@ public:
 	void SetTransformCBV(const GraphicsContext& context, UINT drawHandle) const;
 	void SetMaterialCBV(const GraphicsContext& context, uint32_t materialHandle) const;
 
+	UINT CreateShaderResourceView(ID3D12Resource* resource, DXGI_FORMAT format);
+	void SetGraphicsRootDescriptorTable(const GraphicsContext& context, UINT offset) const;
+
+	const std::vector<ID3D12DescriptorHeap*>& GetDescriptorHeaps() const;
+
 	void Reset();
 
 private:
-	FrameCB frameData;
-	TransformCB transformData;
+	FrameData frameData;
+	TransformArray transformData;
 	UINT transformCount = 0;
 
-	ConstantBuffer<FrameCB> frameCB;
-	ConstantBuffer<TransformCB> transformCB;
-	ConstantBuffer<MaterialCB> materialCB;
+	ConstantBuffer<FrameData> frameCB;
+	ConstantBuffer<TransformData> transformCB;
+	ConstantBuffer<MaterialPropertyData> materialCB;
+	ShaderResourceBuffer shaderResourceBuffer;
+	std::vector<ID3D12DescriptorHeap*> descriptorHeaps;
 };

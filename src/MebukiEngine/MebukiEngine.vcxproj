@@ -138,6 +138,7 @@
     <ClInclude Include="Rendering\ConstantBufferLayout.h" />
     <ClInclude Include="Rendering\GpuConstants.h" />
     <ClInclude Include="Rendering\RegisterType.h" />
+    <ClInclude Include="Rendering\ShaderResourceBuffer.h" />
     <ClInclude Include="Toolkit\Rendering\MaterialHandler.h" />
     <ClInclude Include="Toolkit\Mesh\ModelLoader.h" />
     <ClInclude Include="Toolkit\Component\DirectionalLight.h" />
@@ -179,6 +180,7 @@
     <ClInclude Include="Toolkit\Rendering\MaterialLayout.h" />
     <ClInclude Include="Toolkit\Rendering\ShaderPassPool.h" />
     <ClInclude Include="Toolkit\Mesh\MeshData.h" />
+    <ClInclude Include="Toolkit\Rendering\Texture.h" />
     <ClInclude Include="Toolkit\World.h" />
     <ClInclude Include="Toolkit\World\World.h" />
     <ClInclude Include="Toolkit\Mesh\Mesh.h" />
@@ -191,6 +193,7 @@
     <ClCompile Include="Application\GameApplication.cpp" />
     <ClCompile Include="Basic\UID.cpp" />
     <ClCompile Include="Rendering\GpuConstants.cpp" />
+    <ClCompile Include="Rendering\ShaderResourceBuffer.cpp" />
     <ClCompile Include="Toolkit\Rendering\MaterialHandler.cpp" />
     <ClCompile Include="Toolkit\Mesh\ModelLoader.cpp" />
     <ClCompile Include="Toolkit\Component\DirectionalLight.cpp" />
@@ -212,6 +215,7 @@
     <ClCompile Include="Toolkit\Mesh\PrimitiveMesh.cpp" />
     <ClCompile Include="Toolkit\Math\Vec3.cpp" />
     <ClCompile Include="Toolkit\Rendering\MaterialLayout.cpp" />
+    <ClCompile Include="Toolkit\Rendering\Texture.cpp" />
     <ClCompile Include="Toolkit\World\World.cpp" />
     <ClCompile Include="Toolkit\Mesh\Mesh.cpp" />
     <ClCompile Include="Toolkit\World\WorldManager.cpp" />

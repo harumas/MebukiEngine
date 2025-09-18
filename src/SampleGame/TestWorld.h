@@ -18,5 +18,6 @@ public:
 	}
 
 private:
+	std::shared_ptr<Actor> acube;
 	std::shared_ptr<Actor> cube;
 };

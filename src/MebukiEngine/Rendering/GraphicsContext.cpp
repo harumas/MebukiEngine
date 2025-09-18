@@ -10,6 +10,11 @@ void GraphicsContext::SetGraphicsRootConstantBufferView(UINT rootParameter, D3D1
 	commandList->SetGraphicsRootConstantBufferView(rootParameter, address);
 }
 
+void GraphicsContext::SetGraphicsRootDescriptorTable(UINT rootParameter, D3D12_GPU_DESCRIPTOR_HANDLE handle) const
+{
+	commandList->SetGraphicsRootDescriptorTable(rootParameter, handle);
+}
+
 void GraphicsContext::SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology) const
 {
 	commandList->IASetPrimitiveTopology(topology);
@@ -39,4 +44,14 @@ void GraphicsContext::DrawInstanced(UINT indexCountPerInstance, UINT instanceCou
 void GraphicsContext::SetPipelineState(ID3D12PipelineState* pipelineState) const
 {
 	commandList->SetPipelineState(pipelineState);
+}
+
+void GraphicsContext::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* barriers) const
+{
+	commandList->ResourceBarrier(numBarriers, barriers);
+}
+
+ID3D12GraphicsCommandList* GraphicsContext::GetCommandList() const
+{
+	return commandList.get();
 }
