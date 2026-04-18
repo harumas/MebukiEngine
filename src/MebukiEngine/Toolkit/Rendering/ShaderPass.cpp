@@ -1,4 +1,4 @@
-﻿#include "ShaderPass.h"
+#include "ShaderPass.h"
 
 #include "Toolkit/Mesh/MeshData.h"
 
@@ -35,18 +35,12 @@ void ShaderPass::Compile(ID3D12Device* device, ID3D12RootSignature* rootSignatur
 	};
 
 	// パイプラインステートオブジェクト(PSO)を生成
+	// NOTE: RasterizerState, BlendState, DepthStencilState, etc. are configured
+	// by subclass constructors before Compile() is called — do not overwrite them here.
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = rootSignature;
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vsBlob.get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(psBlob.get());
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	psoDesc.SampleDesc.Count = 1;
 
 	// パイプラインステートの作成
 	winrt::check_hresult(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS_WRT(pipelineState)));

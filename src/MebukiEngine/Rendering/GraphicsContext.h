@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "ConstantBufferLayout.h"
 
 class GraphicsContext
@@ -26,6 +26,7 @@ public:
 	// 描画コマンドを発行する関数群
 	void Draw(UINT vertexCount, UINT vertexStartOffset) const;
 	void DrawInstanced(UINT vertexCountPerInstance, UINT instanceCount, UINT startVertexLocation, UINT startInstanceLocation) const;
+	void DrawNonIndexed(UINT vertexCount, UINT instanceCount, UINT startVertexLocation, UINT startInstanceLocation) const;
 
 	// パイプラインステートオブジェクトをセットします
 	void SetPipelineState(ID3D12PipelineState* pipelineState) const;

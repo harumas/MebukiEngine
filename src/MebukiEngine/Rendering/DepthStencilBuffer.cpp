@@ -1,4 +1,4 @@
-﻿#include "DepthStencilBuffer.h"
+#include "DepthStencilBuffer.h"
 
 DepthStencilBuffer::DepthStencilBuffer(ID3D12Device* device, UINT width, UINT height)
 {
@@ -13,7 +13,7 @@ DepthStencilBuffer::DepthStencilBuffer(ID3D12Device* device, UINT width, UINT he
 	depthResDesc.Width = width;
 	depthResDesc.Height = height;
 	depthResDesc.DepthOrArraySize = 1;
-	depthResDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthResDesc.Format = DXGI_FORMAT_R32_TYPELESS;
 	depthResDesc.SampleDesc.Count = 1;
 	depthResDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 	depthResDesc.MipLevels = 1;

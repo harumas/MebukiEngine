@@ -63,13 +63,14 @@ using namespace DirectX;
 #include "Application/WinApplication.h"
 #include "Application/Application.h"
 #include "Application/GameApplication.h"
-#include "Rendering/PipelineTypes.h";
-#include "Rendering/RootSignature.h";
-#include "Rendering/RenderTargetBuffer.h";
+#include "Rendering/PipelineTypes.h"
+#include "Rendering/RootSignature.h"
+#include "Rendering/RenderTargetBuffer.h"
 #include "Rendering/GraphicsDevice.h"
-#include "Rendering/RenderPipeline.h";
-#include "Rendering/DepthStencilBuffer.h";
+#include "Rendering/RenderPipeline.h"
+#include "Rendering/DepthStencilBuffer.h"
 #include "Rendering/ConstantBuffer.h"
+#include "Input/GameInput.h"
 
 
 // ツールキット

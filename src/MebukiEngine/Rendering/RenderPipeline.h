@@ -4,6 +4,7 @@
 #include "DepthStencilBuffer.h"
 #include "GpuConstants.h"
 #include "GraphicsContext.h"
+#include "ImGuiRenderer.h"
 
 class RootSignature;
 
@@ -11,12 +12,15 @@ class RenderPipeline
 {
 public:
 	EventListener<GraphicsContext&, GpuConstants&> onRenderProcess;
+	EventListener<GraphicsContext&, GpuConstants&> onPostRenderProcess;
 
 	void Initialize(const WindowInfo& windowInfo);
 	void RenderFrame(const WindowInfo& windowInfo);
 	void Finalize();
 
 	ID3D12RootSignature* GetRootSignature() const;
+	DepthStencilBuffer* GetDepthStencilBuffer() const;
+	ImGuiRenderer& GetImGuiRenderer() const;
 
 private:
 	static constexpr UINT frameBufferCount = 2;
@@ -31,6 +35,7 @@ private:
 	std::unique_ptr<DepthStencilBuffer> depthStencilBuffer = nullptr;
 	std::unique_ptr<RootSignature> rootSignature = nullptr;
 	std::unique_ptr<GpuConstants> gpuConstants = nullptr;
+	std::unique_ptr<ImGuiRenderer> imguiRenderer = nullptr;
 
 	UINT fenceValue[frameBufferCount] = {};
 	HANDLE fenceEvent = nullptr;

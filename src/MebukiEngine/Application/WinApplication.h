@@ -17,7 +17,9 @@ public:
 	int Run(ApplicationProperty& property);
 	std::function<void(const WindowInfo&)> OnInitialize;
 	std::function<int(const WindowInfo&)> OnProcess;
+	std::function<void(const LPARAM&)> OnProcessInput;
 	std::function<void(void)> OnDispose;
+	std::function<bool(HWND, UINT, WPARAM, LPARAM)> OnWin32Message;
 
 private:
 	WNDCLASSEXW windowClass = {};
@@ -31,6 +33,8 @@ private:
 	void DestroyWindowInstance(HWND hwnd) const;
 	void UnregisterWindowClass() const;
 
+	LRESULT CALLBACK HandleProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+	static WinApplication* GetThis(HWND hwnd, UINT msg, LPARAM lp);
 };
 

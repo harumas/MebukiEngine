@@ -1,4 +1,4 @@
-﻿#include "GraphicsContext.h"
+#include "GraphicsContext.h"
 
 float GraphicsContext::GetAspectRatio() const
 {
@@ -39,6 +39,11 @@ void GraphicsContext::DrawInstanced(UINT indexCountPerInstance, UINT instanceCou
 	UINT startInstanceLocation) const
 {
 	commandList->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, 0, startInstanceLocation);
+}
+
+void GraphicsContext::DrawNonIndexed(UINT vertexCount, UINT instanceCount, UINT startVertexLocation, UINT startInstanceLocation) const
+{
+	commandList->DrawInstanced(vertexCount, instanceCount, startVertexLocation, startInstanceLocation);
 }
 
 void GraphicsContext::SetPipelineState(ID3D12PipelineState* pipelineState) const

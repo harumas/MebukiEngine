@@ -7,13 +7,14 @@
 
 
 Application::Application(const WorldProfile& worldProfile) : worldManager(worldProfile)
-{
-}
+{}
 
 Application::~Application() = default;
 
 void Application::Initialize(const WindowInfo& windowInfo)
 {
+	inputProvider.Initialize(windowInfo.hwnd);
+
 	//描画パイプラインの初期化 
 	renderPipeline.Initialize(windowInfo);
 
@@ -21,12 +22,15 @@ void Application::Initialize(const WindowInfo& windowInfo)
 	renderPipeline.onRenderProcess.AddListener(std::bind(&Application::Render, this, std::placeholders::_1, std::placeholders::_2));
 
 	// ServiceLocatorに各種機能を登録
+	engineService.RegisterInstance<RenderPipeline>(std::shared_ptr<RenderPipeline>(&renderPipeline, [](RenderPipeline*) {}));
 	engineService.Register<ShaderPassPool>(renderPipeline.GetRootSignature());
 	engineService.Register<MaterialHandler>();
 	actorService = engineService.Register<ActorService>();
 
 	// 最初のワールドに切り替え
 	worldManager.Switch(0, engineService);
+
+	isInitialized = true;
 }
 
 int Application::Process(const WindowInfo& windowInfo)
@@ -39,7 +43,33 @@ int Application::Process(const WindowInfo& windowInfo)
 	// フレームのレンダリング
 	renderPipeline.RenderFrame(windowInfo);
 
+	// 入力バッファの更新
+	inputProvider.SwapBuffer();
+
 	return 1;
+}
+
+void Application::ProcessInput(const LPARAM& lparam)
+{
+	// 入力の処理
+	inputProvider.Process(lparam);
+}
+
+bool Application::ProcessWin32Message(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	if (!isInitialized)
+		return false;
+
+	// フォーカスを失った際にキー入力状態をリセット
+	// （非アクティブ中のキーリリースはWM_INPUTが届かないため取りこぼされる）
+	if (msg == WM_KILLFOCUS)
+	{
+		inputProvider.ClearAllKeys();
+		return false;
+	}
+
+	// ImGui に Win32 メッセージを転送する
+	return renderPipeline.GetImGuiRenderer().ProcessWin32Message(hwnd, msg, wParam, lParam);
 }
 
 void Application::Finalize()

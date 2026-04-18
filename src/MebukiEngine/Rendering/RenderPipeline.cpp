@@ -36,6 +36,10 @@ void RenderPipeline::Initialize(const WindowInfo& windowInfo)
 	// フレーム同期に使用するイベントハンドルを作成する
 	CreateFence();
 	WaitForFence();
+
+	// ImGui の初期化
+	imguiRenderer = std::make_unique<ImGuiRenderer>();
+	imguiRenderer->Initialize(device.get(), commandQueue.get(), windowInfo.hwnd, frameBufferCount, DXGI_FORMAT_R8G8B8A8_UNORM);
 }
 
 void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
@@ -76,9 +80,32 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 	// デプスステンシルバッファをクリア
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+	// ImGui フレーム開始
+	imguiRenderer->BeginFrame();
+
 	GraphicsContext context(commandList, windowInfo);
 
 	onRenderProcess(context, *gpuConstants);
+
+	// 深度バッファをSRVとして読めるように状態遷移し、DSVバインドを解除する
+	D3D12_RESOURCE_BARRIER barrierDepth2SRV = CD3DX12_RESOURCE_BARRIER::Transition(
+		depthStencilBuffer->Get(),
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	commandList->ResourceBarrier(1, &barrierDepth2SRV);
+	commandList->OMSetRenderTargets(1, &rtvHandle, true, nullptr);
+
+	onPostRenderProcess(context, *gpuConstants);
+
+	// 深度バッファの状態をDEPTH_WRITEに戻す
+	D3D12_RESOURCE_BARRIER barrierSRV2Depth = CD3DX12_RESOURCE_BARRIER::Transition(
+		depthStencilBuffer->Get(),
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	commandList->ResourceBarrier(1, &barrierSRV2Depth);
+
+	// ImGui 描画（ポストプロセス後、Present前）
+	imguiRenderer->EndFrame(commandList.get());
 
 	// バックバッファは画面更新に使用される
 	const D3D12_RESOURCE_BARRIER& barrier2RTPresent = renderTargetBuffer->GetResourceBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -102,6 +129,9 @@ void RenderPipeline::Finalize()
 	// 参照しなくなっていることを確認
 	WaitForFence();
 
+	// ImGui の終了処理
+	imguiRenderer->Shutdown();
+
 	// フレーム同期に使用するイベントハンドルを破棄する
 	CloseHandle(fenceEvent);
 }
@@ -109,6 +139,16 @@ void RenderPipeline::Finalize()
 ID3D12RootSignature* RenderPipeline::GetRootSignature() const
 {
 	return rootSignature.get()->Get();
+}
+
+DepthStencilBuffer* RenderPipeline::GetDepthStencilBuffer() const
+{
+	return depthStencilBuffer.get();
+}
+
+ImGuiRenderer& RenderPipeline::GetImGuiRenderer() const
+{
+	return *imguiRenderer;
 }
 
 void RenderPipeline::CreateDXGIFactory(winrt::com_ptr<IDXGIFactory6>& dxgiFactory)

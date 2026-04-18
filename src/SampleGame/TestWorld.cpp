@@ -1,7 +1,8 @@
-#pragma once
 #include "TestWorld.h"
 #include "ShaderPass/HalfLambertPass.h"
 #include "ShaderPass/SkyboxPass.h"
+#include "Component/DepthDebugComponent.h"
+#include "Component/InputDebugComponent.h"
 #include "Toolkit/Component/DirectionalLight.h"
 #include "Toolkit/Rendering/MaterialHandler.h"
 
@@ -12,11 +13,11 @@ void TestWorld::Initialize(const EngineService& engineService)
 	auto dLightActor = actorService->Create(L"DirectionalLight");
 	dLightActor->AddComponent<DirectionalLight>();
 
-	//auto lightActor = actorService->Create(L"PointLight");
-	//std::shared_ptr<PointLight> light = lightActor->AddComponent<PointLight>();
-	//light->currentData.lightPosition = { 0.0f, 2.0f, -4.0f };
-	//light->currentData.radius = 10.0f;
-	//light->currentData.lightColor = Vec3{ 15.0f,15.0f,15.0f };
+	auto lightActor = actorService->Create(L"PointLight");
+	std::shared_ptr<PointLight> light = lightActor->AddComponent<PointLight>();
+	light->currentData.lightPosition = { 0.0f, 2.0f, -4.0f };
+	light->currentData.radius = 10.0f;
+	light->currentData.lightColor = Vec3{ 15.0f,15.0f,15.0f };
 
 	auto cameraActor = actorService->Create(L"MainCamera");
 	cameraActor->GetComponent<Transform>()->position = Vec3(0.0f, 0.0f, -5.0f);
@@ -80,9 +81,24 @@ void TestWorld::Initialize(const EngineService& engineService)
 		skyboxRenderer->SetMesh(skyboxMesh);
 		skyboxRenderer->SetMaterial(skyBox);
 	}
+
+	auto debugActor = actorService->Create(L"DebugDepth");
+	auto debugComponent = debugActor->AddComponent<DepthDebugComponent>();
+	debugComponent->Setup(engineService);
+
+	// InputDebugComponent の追加
+	auto inputDebugActor = actorService->Create(L"InputDebug");
+	auto inputDebugComponent = inputDebugActor->AddComponent<InputDebugComponent>();
+	inputDebugComponent->Setup(engineService);
 }
 
 void TestWorld::Update()
 {
+	auto transform = cube->GetComponent<Transform>();
+
+	if (GameInput::GetKey(Key::A))
+		transform->rotation.y -= XM_PI * 0.005f;
+	else if (GameInput::GetKey(Key::D))
+		transform->rotation.y += XM_PI * 0.005f;
 }
 
