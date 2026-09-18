@@ -17,6 +17,7 @@ struct Vec3 : public XMFLOAT3
 		XMStoreFloat3(this, temp);
 	}
 
+	static const XMVECTOR ZERO;
 	static const XMVECTOR RIGHT;
 	static const XMVECTOR UP;
 	static const XMVECTOR FORWARD;

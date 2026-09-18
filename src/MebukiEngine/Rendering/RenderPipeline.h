@@ -16,11 +16,15 @@ public:
 
 	void Initialize(const WindowInfo& windowInfo);
 	void RenderFrame(const WindowInfo& windowInfo);
+	void Resize(UINT width, UINT height);
 	void Finalize();
 
 	ID3D12RootSignature* GetRootSignature() const;
 	DepthStencilBuffer* GetDepthStencilBuffer() const;
+	RenderTargetBuffer* GetRenderTargetBuffer() const;
 	ImGuiRenderer& GetImGuiRenderer() const;
+	GpuConstants& GetGpuConstants() const { return *gpuConstants; }
+	const winrt::com_ptr<ID3D12Device>& GetDevice() const { return device; }
 
 private:
 	static constexpr UINT frameBufferCount = 2;
@@ -50,5 +54,6 @@ private:
 	void CreateCommandList();
 
 	void WaitForFence();
+	void WaitForFenceAt(UINT index);
 	void WaitForNextFrame();
 };

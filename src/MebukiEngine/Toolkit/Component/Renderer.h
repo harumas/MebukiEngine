@@ -7,16 +7,22 @@
 class Renderer : public Component
 {
 public:
-	explicit Renderer(const std::shared_ptr<Actor>& actorRef);
+	explicit Renderer(ActorRef actorRef);
 
-	void SetMesh(const Mesh& mesh);
+	// 同じMeshを複数のRendererで共有できるよう、コピーせずに参照を持つ
+	void SetMesh(std::shared_ptr<Mesh> mesh);
 	void SetMaterial(const Material& material);
 
 	void OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants) override;
-	void OnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants) override;
+	void OnDraw(RenderQueue& renderQueue) override;
 
 private:
-	Mesh mesh;
+	// テクスチャを持たないRenderer全体で1枚を共有する
+	// (Rendererごとに作ると512x512のリソースが描画数だけ増えてVRAMを食い潰す)
+	static Texture whiteTexture;
+	static UINT whiteTextureHandle;
+
+	std::shared_ptr<Mesh> mesh;
 	Material material;
 	Texture texture;
 	bool isResourceUpdated;

@@ -1,10 +1,11 @@
 #pragma once
 #include "Component.h"
+#include <Rendering/GpuConstants.h>
 
 class PointLight : public Component
 {
 public:
-	explicit PointLight(const std::shared_ptr<Actor>& actorRef);
+	explicit PointLight(ActorRef actorRef);
 
 	void OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants) override;
 

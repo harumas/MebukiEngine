@@ -7,7 +7,7 @@ class SkyboxPass : public ShaderPass
 public:
 	SkyboxPass() : ShaderPass(MaterialLayout{})
 	{
-		shaderPath = L"Shaders/Skybox.hlsl";
+		shaderPath = L"SampleGame/Shaders/Skybox.hlsl";
 
 		// PSOの設定
 		psoDesc = {};

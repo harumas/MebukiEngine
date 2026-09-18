@@ -6,7 +6,8 @@ class ShaderPass;
 class ShaderPassPool
 {
 public:
-	explicit ShaderPassPool(ID3D12RootSignature* rootSignature) : rootSignature(rootSignature)
+	explicit ShaderPassPool(ID3D12Device* device, ID3D12RootSignature* rootSignature)
+		: device(device), rootSignature(rootSignature)
 	{
 	}
 
@@ -22,7 +23,7 @@ public:
 
 		// シェーダのコンパイル
 		std::shared_ptr<T> shaderPass = std::make_shared<T>();
-		shaderPass->Compile(GraphicsDevice::Get(), rootSignature);
+		shaderPass->Compile(device, rootSignature);
 
 		shaderPassPool.emplace(id, shaderPass);
 		return std::dynamic_pointer_cast<T>(shaderPass);
@@ -30,5 +31,6 @@ public:
 
 private:
 	std::unordered_map<std::type_index, std::shared_ptr<ShaderPass>> shaderPassPool;
+	ID3D12Device* device;
 	ID3D12RootSignature* rootSignature;
 };

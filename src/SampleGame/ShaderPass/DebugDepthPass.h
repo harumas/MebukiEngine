@@ -7,7 +7,7 @@ class DebugDepthPass : public ShaderPass
 public:
 	DebugDepthPass() : ShaderPass(MaterialLayout{})
 	{
-		shaderPath = L"Shaders/DebugDepth.hlsl";
+		shaderPath = L"SampleGame/Shaders/DebugDepth.hlsl";
 
 		psoDesc = {};
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);

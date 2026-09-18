@@ -396,3 +396,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# 大容量のテスト用アセット (Intel Sponza等はリポジトリに含めない)
+src/SampleGame/Assets/NewSponza_*.glb

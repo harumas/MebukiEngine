@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Rendering/GraphicsContext.h"
+#include <DirectXTex.h>
 
 class Texture
 {

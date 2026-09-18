@@ -1,6 +1,6 @@
 #include "Transform.h"
 
-Transform::Transform(const std::shared_ptr<Actor>& actorRef) :
+Transform::Transform(ActorRef actorRef) :
 	Component(actorRef),
 	position(0, 0, 0),
 	rotation(0, 0, 0),

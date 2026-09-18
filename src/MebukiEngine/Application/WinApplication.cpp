@@ -3,44 +3,58 @@
 
 int WinApplication::Run(ApplicationProperty& property)
 {
-	// COMの初期化
-	ThrowIfFailed(::CoInitializeEx(nullptr, COINIT_MULTITHREADED));
-
-	// グローバル文字列の初期化
-	LoadStringW(property.hInstance, IDS_APP_TITLE, titleName, MAX_LOADSTRING);
-	LoadStringW(property.hInstance, IDC_MEBUKIPROJECT, className, MAX_LOADSTRING);
-
-	// 文字列のコピー
-	wcscpy_s(titleName, property.titleName);
-	wcscpy_s(className, property.windowClassName);
-
-	// ウィンドウクラス作成
-	ThrowIfFailed(RegisterWindowClass(windowClass, property.hInstance));
-
-	// ウィンドウ作成
-	HWND hwnd = CreateWindowInstance(property);
-	windowInfo = { hwnd, property.initialRect.right, property.initialRect.bottom };
-
-	OnInitialize(windowInfo);
-
-	// メッセージの処理
-	UINT latestMessage = ProcessMessage(property.hInstance);
-
-	OnDispose();
-
-	if (latestMessage != WM_QUIT)
+	try
 	{
-		// ウィンドウを破棄する
-		DestroyWindowInstance(hwnd);
+		// COMの初期化
+		ThrowIfFailed(::CoInitializeEx(nullptr, COINIT_MULTITHREADED));
+
+		// グローバル文字列の初期化
+		LoadStringW(property.hInstance, IDS_APP_TITLE, titleName, MAX_LOADSTRING);
+		LoadStringW(property.hInstance, IDC_MEBUKIPROJECT, className, MAX_LOADSTRING);
+
+		// 文字列のコピー
+		wcscpy_s(titleName, property.titleName);
+		wcscpy_s(className, property.windowClassName);
+
+		// ウィンドウクラス作成
+		ThrowIfFailed(RegisterWindowClass(windowClass, property.hInstance));
+
+		// ウィンドウ作成
+		HWND hwnd = CreateWindowInstance(property);
+		windowInfo = { hwnd, property.initialRect.right, property.initialRect.bottom };
+
+		OnInitialize(windowInfo);
+
+		// メッセージの処理
+		UINT latestMessage = ProcessMessage(property.hInstance);
+
+		OnDispose();
+
+		if (latestMessage != WM_QUIT)
+		{
+			// ウィンドウを破棄する
+			DestroyWindowInstance(hwnd);
+		}
+
+		// クラスを登録解除する
+		UnregisterWindowClass();
+
+		// COMのリリース
+		::CoUninitialize();
+
+		return 0;
 	}
-
-	// クラスを登録解除する
-	UnregisterWindowClass();
-
-	// COMのリリース
-	::CoUninitialize();
-
-	return 0;
+	catch (const std::exception& e)
+	{
+		// 未処理の例外を、無言でクラッシュさせずに表示する
+		MessageBoxA(nullptr, e.what(), "MebukiEngine - Fatal Error", MB_OK | MB_ICONERROR);
+		return -1;
+	}
+	catch (...)
+	{
+		MessageBoxA(nullptr, "Unknown fatal error occurred.", "MebukiEngine - Fatal Error", MB_OK | MB_ICONERROR);
+		return -1;
+	}
 }
 
 ATOM WinApplication::RegisterWindowClass(WNDCLASSEXW& wndClass,
@@ -157,6 +171,25 @@ LRESULT WinApplication::HandleProc(HWND hwnd, UINT message, WPARAM wparam, LPARA
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			return 0;
+		case WM_SIZE:
+		{
+			UINT newWidth = LOWORD(lparam);
+			UINT newHeight = HIWORD(lparam);
+
+			// 最小化時など、サイズが0の場合は無視する
+			if (newWidth > 0 && newHeight > 0)
+			{
+				windowInfo.width = newWidth;
+				windowInfo.height = newHeight;
+
+				if (OnResize)
+				{
+					OnResize(newWidth, newHeight);
+				}
+			}
+
+			return 0;
+		}
 		case WM_INPUT:
 			OnProcessInput(lparam);
 		default:

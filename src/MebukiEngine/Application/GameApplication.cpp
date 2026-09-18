@@ -9,6 +9,7 @@ GameApplication::GameApplication(const ApplicationProperty& property, const Worl
 	winApp.OnProcess = std::bind(&Application::Process, &application, std::placeholders::_1);
 	winApp.OnProcessInput = std::bind(&Application::ProcessInput, &application, std::placeholders::_1);
 	winApp.OnDispose = std::bind(&Application::Finalize, &application);
+	winApp.OnResize = std::bind(&Application::Resize, &application, std::placeholders::_1, std::placeholders::_2);
 
 	// Win32 メッセージを ImGui に転送する
 	winApp.OnWin32Message = std::bind(&Application::ProcessWin32Message, &application,

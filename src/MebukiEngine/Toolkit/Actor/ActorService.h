@@ -2,7 +2,15 @@
 #include <ranges>
 
 #include "Actor.h"
+#include "ActorRef.h"
 #include "Basic/UID.h"
+#include <Toolkit/Component/Transform.h>
+
+struct ActorSlot
+{
+	uint32_t generation = 0;
+	std::unique_ptr<Actor> actor = nullptr;
+};
 
 class ActorService
 {
@@ -10,80 +18,26 @@ public:
 	ActorService() = default;
 	~ActorService() = default;
 
-	// Actorを生成するメソッド
-	std::shared_ptr<Actor> Create(const std::wstring& name)
-	{
-		auto actor = std::make_shared<Actor>(name);
-		actor->AddComponent<Transform>();
-		actors.emplace(actor->GetUid(), actor);
+	ActorRef Create(const std::wstring& name);
+	ActorRef GetRef(ActorHandle h);
+	bool IsAlive(ActorHandle h) const;
+	Actor& Get(ActorHandle h);
 
-		return actor;
-	}
+	void RequestDestroy(ActorHandle h);
+	void ProcessDestroy();
 
-	// Actorを取得するメソッド
-	template<typename T>
-	std::shared_ptr<T> GetActor(const meb::uid& uid)
-	{
-		auto it = actors.find(uid);
-		if (it != actors.end())
-		{
-			return std::static_pointer_cast<T>(it->second);
-		}
+	// 生存している全Actorを即座に破棄する（ワールド切り替え時などに使用）
+	void Clear();
 
-		return nullptr;
-	}
-
-	std::ranges::elements_view
-		<std::ranges::ref_view
-		<const std::unordered_map
-		<unsigned long long, std::shared_ptr<Actor>>>, 1> GetActors() const
-	{
-		return std::ranges::views::values(actors);
-	}
-
-	// Actorを破棄するメソッド
-	void DestroyActor(const meb::uid& uid)
-	{
-		auto it = actors.find(uid);
-		if (it != actors.end())
-		{
-			it->second->InvokeOnDestroy();
-			actors.erase(it);
-		}
-	}
-
-	void InvokeOnUpdate()
-	{
-		auto valuesView = std::ranges::views::values(actors);
-
-		for (const auto& actor : valuesView)
-		{
-			actor->InvokeOnUpdate();
-		}
-	}
-
-	void InvokeOnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants)
-	{
-		auto valuesView = std::ranges::views::values(actors);
-
-		for (const auto& actor : valuesView)
-		{
-			actor->InvokeOnPreDraw(context, gpuConstants);
-		}
-	}
-
-
-	void InvokeOnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants)
-	{
-		auto valuesView = std::ranges::views::values(actors);
-
-		for (const auto& actor : valuesView)
-		{
-			actor->InvokeOnDraw(context, gpuConstants);
-		}
-	}
-
+	void InvokeOnUpdate(float deltaTime);
+	void InvokeOnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants);
+	void InvokeOnDraw(RenderQueue& renderQueue);
 
 private:
-	std::unordered_map<meb::uid, std::shared_ptr<Actor>> actors;
+	std::vector<ActorSlot> slots;
+	std::vector<uint32_t> freeList;
+	std::queue<uint32_t> destroyRequestQueue;
+
+	// 生きているActorだけにcallbackを適用する（ループ中の再確保・破棄予約を考慮したindexループ）
+	void ForEachAliveActor(const std::function<void(Actor&)>& callback);
 };

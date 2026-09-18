@@ -17,7 +17,7 @@ public:
 	/// <summary>
 	/// 更新
 	/// </summary>
-	virtual void Update() = 0;
+	virtual void Update(float deltaTime) = 0;
 
 	virtual std::string_view GetName()
 	{

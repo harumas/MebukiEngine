@@ -1,12 +1,14 @@
 ﻿#pragma once
 #include <Toolkit/Component/Transform.h>
+#include <Toolkit/Actor/ActorRef.h>
 
 class Actor;
+class ActorRef;
 
 class Camera : public Component
 {
 public:
-	explicit Camera(const std::shared_ptr<Actor>& actorRef);
+	explicit Camera(ActorRef actorRef);
 
 	XMMATRIX GetViewMatrix() const;
 	XMMATRIX GetProjectionMatrix(float aspectRatio) const;

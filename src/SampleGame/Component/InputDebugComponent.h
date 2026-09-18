@@ -7,12 +7,16 @@
 class InputDebugComponent : public Component
 {
 public:
-	explicit InputDebugComponent(const std::shared_ptr<Actor>& actorRef);
+	explicit InputDebugComponent(ActorRef actorRef);
 	~InputDebugComponent() override = default;
 
 	void Setup(const EngineService& engineService);
+	void OnDestroy() override;
 
 private:
 	// onPostRenderProcess にバインドされる描画コールバック
 	void OnPostRender(const GraphicsContext& context, GpuConstants& gpuConstants);
+
+	RenderPipeline* renderPipeline = nullptr;
+	UINT postRenderHandle = static_cast<UINT>(-1);
 };

@@ -1,4 +1,6 @@
 #include "WorldManager.h"
+#include "Basic/EngineService.h"
+#include "Toolkit/Actor/ActorService.h"
 
 void WorldManager::Switch(int index, const EngineService& engineService)
 {
@@ -6,6 +8,9 @@ void WorldManager::Switch(int index, const EngineService& engineService)
 	{
 		currentWorld.reset();
 	}
+
+	// 前のワールドが生成したActorを全て破棄する
+	engineService.Resolve<ActorService>()->Clear();
 
 	if (index < factory->size())
 	{

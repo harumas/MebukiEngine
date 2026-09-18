@@ -2,10 +2,11 @@
 #include "../ShaderPass/DebugDepthPass.h"
 #include "Toolkit/Rendering/ShaderPassPool.h"
 #include "Toolkit/Rendering/MaterialHandler.h"
+#include <Rendering/GraphicsContext.h>
+#include <Rendering/GpuConstants.h>
 
-DepthDebugComponent::DepthDebugComponent(const std::shared_ptr<Actor>& actorRef) : Component(actorRef)
-{
-}
+DepthDebugComponent::DepthDebugComponent(ActorRef actorRef) : Component(actorRef)
+{}
 
 void DepthDebugComponent::Setup(const EngineService& engineService)
 {
@@ -17,7 +18,15 @@ void DepthDebugComponent::Setup(const EngineService& engineService)
 	{
 		auto debugPass = shaderPassPool->GetShaderPass<DebugDepthPass>();
 		debugDepthMaterial = std::make_shared<Material>(materialHandler->Create(debugPass));
-		renderPipeline->onPostRenderProcess.AddListener(std::bind(&DepthDebugComponent::PostRender, this, std::placeholders::_1, std::placeholders::_2));
+		postRenderHandle = renderPipeline->onPostRenderProcess.AddListener(std::bind(&DepthDebugComponent::PostRender, this, std::placeholders::_1, std::placeholders::_2));
+	}
+}
+
+void DepthDebugComponent::OnDestroy()
+{
+	if (renderPipeline && postRenderHandle != static_cast<UINT>(-1))
+	{
+		renderPipeline->onPostRenderProcess.RemoveListener(postRenderHandle);
 	}
 }
 

@@ -11,7 +11,7 @@ public:
 				{"BaseColor", MaterialLayout::ParamType::Float4}
 			})
 	{
-		shaderPath = L"Shaders/HalfLambertShaders.hlsl";
+		shaderPath = L"SampleGame/Shaders/HalfLambertShaders.hlsl";
 
 		// PSOの設定
 		psoDesc = {};
