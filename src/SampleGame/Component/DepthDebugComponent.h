@@ -7,10 +7,11 @@
 class DepthDebugComponent : public Component
 {
 public:
-	explicit DepthDebugComponent(const std::shared_ptr<Actor>& actorRef);
+	explicit DepthDebugComponent(ActorRef actorRef);
 	~DepthDebugComponent() override = default;
 
 	void Setup(const EngineService& engineService);
+	void OnDestroy() override;
 
 private:
 	void PostRender(const GraphicsContext& context, GpuConstants& gpuConstants);
@@ -18,4 +19,5 @@ private:
 	std::shared_ptr<Material> debugDepthMaterial;
 	RenderPipeline* renderPipeline = nullptr;
 	UINT depthSrvHandle = static_cast<UINT>(-1);
+	UINT postRenderHandle = static_cast<UINT>(-1);
 };

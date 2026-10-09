@@ -4,10 +4,18 @@
 class GraphicsContext
 {
 public:
-	explicit GraphicsContext(const winrt::com_ptr<ID3D12GraphicsCommandList>& cmdList, const WindowInfo& windowInfo) :
+	explicit GraphicsContext(const winrt::com_ptr<ID3D12GraphicsCommandList>& cmdList, ID3D12Device* device, const WindowInfo& windowInfo) :
 		commandList(cmdList),
+		device(device),
 		aspectRatio(static_cast<float>(windowInfo.width) / static_cast<float>(windowInfo.height))
-	{}
+	{
+	}
+
+	// D3D12デバイスを取得します
+	ID3D12Device* GetDevice() const
+	{
+		return device;
+	}
 
 	// 画面のアスペクト比を取得します 
 	float GetAspectRatio() const;
@@ -38,6 +46,7 @@ public:
 
 private:
 	winrt::com_ptr<ID3D12GraphicsCommandList> commandList;
+	ID3D12Device* device;
 	float aspectRatio;
 
 	GraphicsContext(const GraphicsContext&) = delete;

@@ -1,17 +1,23 @@
 ﻿#include "Renderer.h"
 #include "Camera.h"
+#include <Toolkit/Actor/Actor.h>
+#include <Rendering/GraphicsContext.h>
+#include <Rendering/GpuConstants.h>
+#include <Rendering/RenderQueue.h>
 
-Renderer::Renderer(const std::shared_ptr<Actor>& actorRef) :
+Texture Renderer::whiteTexture;
+UINT Renderer::whiteTextureHandle = static_cast<UINT>(-1);
+
+Renderer::Renderer(ActorRef actorRef) :
 	Component(actorRef),
 	isResourceUpdated(false),
 	shaderResourceHandle(-1),
 	transformHandle(-1)
-{
-}
+{}
 
-void Renderer::SetMesh(const Mesh& mesh)
+void Renderer::SetMesh(std::shared_ptr<Mesh> mesh)
 {
-	this->mesh = mesh;
+	this->mesh = std::move(mesh);
 }
 
 void Renderer::SetMaterial(const Material& material)
@@ -21,12 +27,16 @@ void Renderer::SetMaterial(const Material& material)
 
 void Renderer::OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants)
 {
-	// モデル行列を取得 
-	const DirectX::XMMATRIX modelMatrix = gameObject.lock()->GetComponent<Transform>()->GetMatrix();
+	// モデル行列を取得 (glTFのノード変換 → Actorの変換 の順で適用する)
+	const DirectX::XMMATRIX nodeMatrix = XMLoadFloat4x4(&mesh->GetMeshData().nodeTransform);
+	const DirectX::XMMATRIX modelMatrix = nodeMatrix * actor->GetComponent<Transform>()->GetMatrix();
 
 	// HLSL側で受け取れるレイアウトに変換
 	XMFLOAT4X4 model4X4;
 	XMStoreFloat4x4(&model4X4, modelMatrix);
+
+	// プロパティ情報を転送する
+	material.UploadPropertyData(gpuConstants);
 
 	// Transform用の定数バッファに登録し、オフセットを取得
 	transformHandle = gpuConstants.AddTransformData(model4X4);
@@ -39,41 +49,47 @@ void Renderer::OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConsta
 			texture.Create(context, material.GetTexturePath());
 			shaderResourceHandle = gpuConstants.CreateShaderResourceView(texture.GetTextureResource(), DXGI_FORMAT_R8G8B8A8_UNORM);
 		}
-		else if (mesh.HasTexture())
+		else if (mesh->HasTexture())
 		{
-			texture.Create(context, mesh.GetMeshData().textureBytes);
-			shaderResourceHandle = gpuConstants.CreateShaderResourceView(texture.GetTextureResource(), DXGI_FORMAT_R8G8B8A8_UNORM);
+			// 同じ画像を使う他のRendererが転送済みなら、そのSRVを使い回す
+			ModelTexture& modelTexture = *mesh->GetMeshData().baseColorTexture;
+
+			if (modelTexture.shaderResourceHandle == static_cast<UINT>(-1))
+			{
+				modelTexture.texture.Create(context, modelTexture.imageBytes);
+				modelTexture.shaderResourceHandle = gpuConstants.CreateShaderResourceView(modelTexture.texture.GetTextureResource(), DXGI_FORMAT_R8G8B8A8_UNORM);
+
+				// デコードしてGPUへ転送したので、PNGのバイト列はもう要らない
+				std::vector<uint8_t>().swap(modelTexture.imageBytes);
+			}
+
+			shaderResourceHandle = modelTexture.shaderResourceHandle;
+		}
+		else
+		{
+			if (whiteTextureHandle == static_cast<UINT>(-1))
+			{
+				whiteTexture.Create(context, L"SampleGame/Assets/WhiteTexture.png");
+				whiteTextureHandle = gpuConstants.CreateShaderResourceView(whiteTexture.GetTextureResource(), DXGI_FORMAT_R8G8B8A8_UNORM);
+			}
+
+			shaderResourceHandle = whiteTextureHandle;
+		}
+
+		if (!mesh->IsUploaded())  // Step 2-1のフラグを見るgetter
+		{
+			mesh->RecordUpload(context.GetCommandList());
 		}
 
 		isResourceUpdated = true;
+
+		// UploadBufferのリリースチェック 
+		mesh->TickUploadBufferRelease();
 	}
 }
 
-void Renderer::OnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants)
+void Renderer::OnDraw(RenderQueue& renderQueue)
 {
-	// 現在のTransformに定数バッファのオフセットを設定
-	gpuConstants.SetTransformCBV(context, transformHandle);
-
-	// 現在のMaterialに定数バッファのオフセットを設定
-	gpuConstants.SetMaterialCBV(context, material.GetHandleId());
-
-	// ShaderResourceViewのハンドルをセット 
-	if (shaderResourceHandle != -1)
-	{
-		gpuConstants.SetGraphicsRootDescriptorTable(context, shaderResourceHandle);
-	}
-
-	// PipelineStateを設定
-	material.SetPipelineState(context);
-
-	// トポロジー情報、頂点バッファ、インデックスバッファをIAステージに設定
-	const MeshData& meshData = mesh.GetMeshData();
-	context.SetPrimitiveTopology(meshData.topology);
-	context.SetVertexBuffer(0, mesh.GetVertexBufferView());
-	context.SetIndexBuffer(mesh.GetIndexBufferView());
-
-	int indicesCount = meshData.use32bitIndex ? meshData.indices32.size() : meshData.indices16.size();
-
-	// 描画コマンドを発行
-	context.Draw(indicesCount, 0);
+	// この時点ではGPUコマンドは発行せず、描画に必要な情報をキューに積むだけ
+	renderQueue.Submit({ mesh.get(), &material, transformHandle, shaderResourceHandle });
 }

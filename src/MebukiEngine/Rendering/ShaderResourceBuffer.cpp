@@ -1,12 +1,12 @@
 ﻿#include "ShaderResourceBuffer.h"
-#include "GraphicsDevice.h"
 
 ShaderResourceBuffer::ShaderResourceBuffer(ID3D12Device* device) :
+	device(device),
 	srvHeap(nullptr),
 	resourceCount(0)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 128; // 必要な最大テクスチャ数
+	srvHeapDesc.NumDescriptors = MAX_SHADER_RESOURCE_COUNT;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
@@ -15,7 +15,13 @@ ShaderResourceBuffer::ShaderResourceBuffer(ID3D12Device* device) :
 
 UINT ShaderResourceBuffer::CreateShaderResourceView(ID3D12Resource* resource, DXGI_FORMAT format)
 {
-	UINT descriptorSize = GraphicsDevice::Get()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	// ヒープを溢れると無関係なディスクリプタを踏み潰すので、ここで止める
+	if (resourceCount >= MAX_SHADER_RESOURCE_COUNT)
+	{
+		throw std::runtime_error("ShaderResourceBuffer: Exceeded maximum number of shader resource views");
+	}
+
+	UINT descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	// ヒープの先頭CPUハンドル
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = srvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -33,14 +39,14 @@ UINT ShaderResourceBuffer::CreateShaderResourceView(ID3D12Resource* resource, DX
 	D3D12_CPU_DESCRIPTOR_HANDLE handle = cpuHandle;
 	handle.ptr += resourceCount * descriptorSize; // スロット0番に書き込む
 
-	GraphicsDevice::Get()->CreateShaderResourceView(resource, &srvDesc, handle);
+	device->CreateShaderResourceView(resource, &srvDesc, handle);
 
 	return resourceCount++;
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE ShaderResourceBuffer::GetGPUDescriptorHandle(UINT offset) const
 {
-	UINT descriptorSize = GraphicsDevice::Get()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	UINT descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = srvHeap->GetGPUDescriptorHandleForHeapStart();
 	gpuHandle.ptr += offset * descriptorSize;
 

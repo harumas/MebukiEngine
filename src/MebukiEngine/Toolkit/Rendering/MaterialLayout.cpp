@@ -27,17 +27,19 @@ size_t MaterialLayout::GetTotalSize() const
 
 void MaterialLayout::RegisterParam(const std::string& name, ParamType type)
 {
-	const size_t align = 16; // CBVの基本はfloat4単位でアライン
+	constexpr size_t registerSize = 16; // HLSLの1レジスタ(float4)のバイト数
 	const size_t size = GetTypeSize(type);
 
-	// アライメントに揃える
-	if (currentOffset % align != 0)
+	// 今のオフセットに置くとレジスタ境界をまたぐ場合のみ、次のレジスタ先頭まで進める
+	// (HLSLのcbufferパッキングと同じルール: またがない限り同じレジスタに詰め込む)
+	const size_t offsetInRegister = currentOffset % registerSize;
+	if (offsetInRegister + size > registerSize)
 	{
-		currentOffset = (currentOffset + align - 1) & ~(align - 1);
+		currentOffset += registerSize - offsetInRegister;
 	}
 
 	(*paramMap)[name] = { currentOffset, size, type };
-	currentOffset += align; // 次も16バイト境界から
+	currentOffset += size;
 }
 
 size_t MaterialLayout::GetTypeSize(ParamType type)

@@ -10,31 +10,63 @@ struct Vec3 : public XMFLOAT3
 		this->z = z;
 	}
 
-	// 3DベクトルをXMVECTORから初期化します	
+	// XMFLOAT3から初期化します
+	Vec3(const XMFLOAT3& other) : XMFLOAT3(other)
+	{}
+
+	// 3DベクトルをXMVECTORから初期化します
 	explicit Vec3(const XMVECTOR& other) :XMFLOAT3()
 	{
 		const XMVECTOR temp = other;
 		XMStoreFloat3(this, temp);
 	}
 
+	static const XMVECTOR ZERO;
 	static const XMVECTOR RIGHT;
 	static const XMVECTOR UP;
 	static const XMVECTOR FORWARD;
 
-	inline bool operator == (const Vec3& r) const { return x == r.x && y == r.y && z == r.z; }
-	inline bool operator != (const Vec3& r) const { return x != r.x || y != r.y || z != r.z; }
-	inline XMVECTOR operator *(const float r) const { return Vec3(x * r, y * r, z * r); }
-	inline XMVECTOR operator /(const float r) const { return Vec3(x / r, y / r, z / r); }
+	bool operator==(const Vec3& r) const
+	{
+		return x == r.x && y == r.y && z == r.z;
+	}
 
-	// ベクトルの内積を求めます
-	float Dot(const Vec3 in) const { return x * in.x + y * in.y + z * in.z; }
+	bool operator!=(const Vec3& r) const
+	{
+		return x != r.x || y != r.y || z != r.z;
+	}
 
-	// ベクトルの外積を求めます
-	Vec3 Cross(const Vec3 in) const { return { y * in.z - z * in.y, z * in.x - x * in.z, x * in.y - y * in.x }; }
+	Vec3 operator+(const Vec3& r) const
+	{
+		return Vec3(x + r.x, y + r.y, z + r.z);
+	}
 
-	// ベクトルをスケールします
-	Vec3 Scale(const float scale) const { return  { x * scale, y * scale, z * scale }; }
+	Vec3 operator-(const Vec3& r) const
+	{
+		return Vec3(x - r.x, y - r.y, z - r.z);
+	}
 
+	Vec3 operator*(const float r) const
+	{
+		return Vec3(x * r, y * r, z * r);
+	}
+
+	Vec3 operator/(const float r) const
+	{
+		return Vec3(x / r, y / r, z / r);
+	}
+
+	// 要素ごとに掛け算します
+	Vec3 operator*(const Vec3& r) const
+	{
+		return Vec3(x * r.x, y * r.y, z * r.z);
+	}
+
+	// 要素ごとに割り算します
+	Vec3 operator/(const Vec3& r) const
+	{
+		return Vec3(x / r.x, y / r.y, z / r.z);
+	}
 
 	Vec3& operator=(const XMVECTOR& other)
 	{
@@ -57,21 +89,39 @@ struct Vec3 : public XMFLOAT3
 		this->z -= other.z;
 	}
 
+	void operator*=(const float r)
+	{
+		this->x *= r;
+		this->y *= r;
+		this->z *= r;
+	}
+
+	void operator/=(const float r)
+	{
+		this->x /= r;
+		this->y /= r;
+		this->z /= r;
+	}
+
+	// 要素ごとに掛け算します
+	void operator*=(const Vec3& other)
+	{
+		this->x *= other.x;
+		this->y *= other.y;
+		this->z *= other.z;
+	}
+
+	// 要素ごとに割り算します
+	void operator/=(const Vec3& other)
+	{
+		this->x /= other.x;
+		this->y /= other.y;
+		this->z /= other.z;
+	}
+
 	operator XMVECTOR() const
 	{
 		return XMLoadFloat3(this);
-	}
-
-	// ベクトルの長さを求めます
-	float Length() const
-	{
-		return (static_cast<Vec3>(XMVector3Length(XMVECTOR(*this)))).x;
-	}
-
-	// ベクトルを正規化します
-	void Normalize()
-	{
-		*this = XMVector3Normalize(XMVECTOR(*this));
 	}
 };
 

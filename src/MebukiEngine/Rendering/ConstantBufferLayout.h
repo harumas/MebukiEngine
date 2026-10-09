@@ -1,8 +1,9 @@
 #pragma once
 
 // モデル行列(64バイト) + Padding(192バイト) = 256バイト
-// Constant Bufferの制限は64KB(65536バイト)なので、最大256個の描画までサポート
-constexpr auto MAX_RENDERING_COUNT = 256;
+// 描画ごとにルートCBVのアドレスをずらして1要素だけ参照するので、
+// シェーダ側から見えるcbufferは常に256バイト。バッファ全体は64KBを超えてよい
+constexpr auto MAX_RENDERING_COUNT = 1024;
 
 // 1マテリアルあたり256バイトまで
 constexpr auto MAX_SHADER_PROPERTY_SIZE = 256;
@@ -21,6 +22,7 @@ struct DirectionalLightFrameData
 	alignas(16) DirectX::XMFLOAT3 lightDirection;
 	alignas(16)	DirectX::XMFLOAT3 lightColor;
 	alignas(16)	DirectX::XMFLOAT3 ambientLight;
+	alignas(16)	DirectX::XMFLOAT4X4 lightViewProj;
 };
 
 struct PointLightFrameData

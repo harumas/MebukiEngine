@@ -24,7 +24,10 @@ public:
 private:
 	struct RootParamData
 	{
-		RootParamData(size_t rangesSize) : ranges(rangesSize) {}
+		RootParamData(size_t rangesSize) : ranges(rangesSize)
+		{
+		}
+
 		std::vector<CD3DX12_DESCRIPTOR_RANGE1> ranges;
 		std::vector<CD3DX12_ROOT_PARAMETER1> rootParams;
 	};

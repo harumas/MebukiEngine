@@ -8,13 +8,13 @@ Actor::Actor(const std::wstring& name) :
 {
 }
 
-void Actor::InvokeOnUpdate()
+void Actor::InvokeOnUpdate(float deltaTime)
 {
 	auto valuesView = std::ranges::views::values(components);
 
 	for (const auto& component : valuesView)
 	{
-		component->OnUpdate();
+		component->OnUpdate(deltaTime);
 	}
 }
 
@@ -28,13 +28,13 @@ void Actor::InvokeOnPreDraw(const GraphicsContext& context, GpuConstants& gpuCon
 	}
 }
 
-void Actor::InvokeOnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants)
+void Actor::InvokeOnDraw(RenderQueue& renderQueue)
 {
 	auto valuesView = std::ranges::views::values(components);
 
 	for (const auto& component : valuesView)
 	{
-		component->OnDraw(context, gpuConstants);
+		component->OnDraw(renderQueue);
 	}
 }
 

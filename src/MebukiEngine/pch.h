@@ -12,8 +12,6 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
-#include <DirectXTex.h>
-#include <d3dcompiler.h>
 #include <winrt/base.h>
 using namespace DirectX;
 

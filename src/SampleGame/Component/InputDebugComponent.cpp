@@ -5,22 +5,29 @@
 // ImGui はプリコンパイル済みヘッダーに含めないため直接インクルード
 #include "../../ThirdParty/imgui/imgui.h"
 
-InputDebugComponent::InputDebugComponent(const std::shared_ptr<Actor>& actorRef)
+InputDebugComponent::InputDebugComponent(ActorRef actorRef)
 	: Component(actorRef)
 {}
 
 void InputDebugComponent::Setup(const EngineService& engineService)
 {
-	const std::shared_ptr<RenderPipeline>& renderPipeline = engineService.Resolve<RenderPipeline>();
+	renderPipeline = engineService.Resolve<RenderPipeline>().get();
+	postRenderHandle = renderPipeline->onPostRenderProcess.AddListener(std::bind(&InputDebugComponent::OnPostRender, this, std::placeholders::_1, std::placeholders::_2));
+}
 
-	renderPipeline->onPostRenderProcess.AddListener(std::bind(&InputDebugComponent::OnPostRender, this, std::placeholders::_1, std::placeholders::_2));
+void InputDebugComponent::OnDestroy()
+{
+	if (renderPipeline && postRenderHandle != static_cast<UINT>(-1))
+	{
+		renderPipeline->onPostRenderProcess.RemoveListener(postRenderHandle);
+	}
 }
 
 void InputDebugComponent::OnPostRender(const GraphicsContext& /*context*/, GpuConstants& /*gpuConstants*/)
 {
 	// ウィンドウの位置とサイズを固定しない（ドラッグ可能）
 	ImGui::SetNextWindowSize(ImVec2(340.0f, 400.0f), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(10.0f, 50.0f), ImGuiCond_FirstUseEver); // 左上はカメラ座標の表示に使う
 
 	ImGui::Begin("Input Debug");
 

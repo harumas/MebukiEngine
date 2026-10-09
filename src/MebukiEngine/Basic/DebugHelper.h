@@ -3,6 +3,10 @@
 #include <exception>
 #include <string>
 
+// Forward declaration to avoid pulling <d3dcompiler.h> into pch.
+struct ID3D10Blob;
+typedef ID3D10Blob ID3DBlob;
+
 inline void ThrowIfFailed(HRESULT hr)
 {
 	// 成功していたらそのままreturnする
@@ -32,28 +36,4 @@ inline void ThrowMessage(const std::string& message)
 	throw std::runtime_error(message);
 }
 
-inline void CheckBlobHRESULT(HRESULT result, ID3DBlob* error)
-{
-	if (SUCCEEDED(result))
-		return;
-
-	if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
-	{
-		::OutputDebugString(L"ファイルが見当たりません\n");
-		exit(1);
-	}
-
-	if (error == nullptr)
-	{
-		std::string msg = std::system_category().message(result);
-		OutputDebugStringA(msg.c_str());
-		OutputDebugStringA("\n");
-		exit(1);
-	}
-
-	std::string s(static_cast<char*>(error->GetBufferPointer()), error->GetBufferSize());
-	s += "\n";
-	OutputDebugStringA(s.c_str());
-
-	exit(1);
-}
+void CheckBlobHRESULT(HRESULT result, ID3DBlob* error);

@@ -20,6 +20,7 @@ public:
 	std::function<void(const LPARAM&)> OnProcessInput;
 	std::function<void(void)> OnDispose;
 	std::function<bool(HWND, UINT, WPARAM, LPARAM)> OnWin32Message;
+	std::function<void(UINT, UINT)> OnResize;
 
 private:
 	WNDCLASSEXW windowClass = {};

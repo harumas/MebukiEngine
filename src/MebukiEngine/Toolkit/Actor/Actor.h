@@ -3,10 +3,13 @@
 
 #include <Toolkit/Entity/Entity.h>
 #include <Toolkit/Component/Component.h>
-#include <Toolkit/Component/Transform.h>
+#include <Toolkit/Actor/ActorRef.h>
 
-class Actor : public Entity, public std::enable_shared_from_this<Actor>
+
+class Actor : public Entity
 {
+	friend class ActorService;
+
 public:
 	std::wstring name;
 
@@ -21,26 +24,37 @@ public:
 			return nullptr;
 		}
 
-		std::shared_ptr<T> component = std::make_shared<T>(shared_from_this());
+		std::shared_ptr<T> component = std::make_shared<T>(selfRef);
 		components.emplace(std::type_index(typeid(T)), component);
 		component->OnCreate();
 
 		return component;
 	}
 
+	/// @brief Actorから指定されたコンポーネントを取得する
+	/// @tparam T Componentの型
+	/// @return Componentのshared_ptr
 	template<typename T>
 	std::shared_ptr<T> GetComponent()
 	{
-		return std::dynamic_pointer_cast<T>(components[std::type_index(typeid(T))]);
+		const auto it = components.find(std::type_index(typeid(T)));
+
+		// コンポーネントが存在しない場合はnullptrを返す 
+		if (it == components.end())
+		{
+			return nullptr;
+		}
+
+		return std::dynamic_pointer_cast<T>(it->second);
 	}
 
-	void InvokeOnUpdate();
+	void InvokeOnUpdate(float deltaTime);
 	void InvokeOnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants);
-	void InvokeOnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants);
+	void InvokeOnDraw(RenderQueue& renderQueue);
 	void InvokeOnDestroy();
 
 private:
 	std::unordered_map<std::type_index, std::shared_ptr<Component>> components;
-	std::weak_ptr<Actor> self;
+	ActorRef selfRef;
 };
 

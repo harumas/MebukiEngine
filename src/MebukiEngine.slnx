@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="MebukiEngine/MebukiEngine.vcxproj" Id="71c84ef0-8588-4976-b707-5958cb95cafe" />
+  <Project Path="SampleGame/SampleGame.vcxproj" Id="8be03843-a7a1-4cb1-b06c-043172ff120c" />
+</Solution>

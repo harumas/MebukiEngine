@@ -28,6 +28,8 @@ public:
 	UINT CreateShaderResourceView(ID3D12Resource* resource, DXGI_FORMAT format);
 	void SetGraphicsRootDescriptorTable(const GraphicsContext& context, UINT offset) const;
 
+	void SetShadowMapSRV(const GraphicsContext& context, UINT offset) const;
+
 	const std::vector<ID3D12DescriptorHeap*>& GetDescriptorHeaps() const;
 
 	void Reset();
