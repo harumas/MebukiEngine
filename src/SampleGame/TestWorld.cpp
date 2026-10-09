@@ -8,6 +8,7 @@
 #include "Toolkit/Rendering/MaterialHandler.h"
 #include "Rendering/GraphicsDevice.h"
 #include "Basic/Profiler.h"
+#include <filesystem>
 
 void TestWorld::Initialize(const EngineService& engineService)
 {
@@ -77,6 +78,13 @@ void TestWorld::Initialize(const EngineService& engineService)
 
 		for (const char* modelPath : sponzaModels)
 		{
+			// Sponzaはリポジトリに含めていないため、無ければ読み込みをスキップする
+			if (!std::filesystem::exists(modelPath))
+			{
+				OutputDebugStringA(("Sponza asset not found, skipped: " + std::string(modelPath) + "\n").c_str());
+				continue;
+			}
+
 			std::vector<std::shared_ptr<Mesh>> partMeshes;
 			{
 				ScopedTimer timer("  Mesh::LoadAll");
