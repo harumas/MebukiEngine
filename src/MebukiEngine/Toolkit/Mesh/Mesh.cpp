@@ -1,6 +1,9 @@
 #include "Mesh.h"
 #include "ModelLoader.h"
 #include "Basic/Profiler.h"
+#include "Basic/Log.h"
+#include <format>
+#include <Toolkit/Math/Vector.h>
 
 Mesh::Mesh()
 {}
@@ -18,6 +21,10 @@ Mesh::Mesh(ID3D12Device* device, const std::string& path, D3D12_PRIMITIVE_TOPOLO
 	// 単一メッシュとして扱いたい呼び出し向けに、先頭のプリミティブだけを使う
 	meshData = std::move(meshDataList[0]);
 	CreateBuffers(device);
+
+	// AABBを求める
+	CalculateBounds();
+
 	ReleaseCpuData();
 }
 
@@ -37,6 +44,10 @@ std::vector<std::shared_ptr<Mesh>> Mesh::LoadAll(ID3D12Device* device, const std
 			ScopedTimer timer("  model: create vertex/index buffers");
 			mesh->CreateBuffers(device);
 		}
+
+		// AABBを求める
+		mesh->CalculateBounds();
+
 		{
 			ScopedTimer timer("  model: release CPU data");
 			mesh->ReleaseCpuData();
@@ -70,6 +81,10 @@ Mesh::Mesh(ID3D12Device* device, std::vector<Vertex> vertices, std::vector<uint1
 
 	CreateVertexBuffer(device, meshData.vertices);
 	CreateIndexBuffer(device, meshData.indices16.data(), meshData.indices16.size(), false);
+
+	// AABBを求める
+	CalculateBounds();
+
 	ReleaseCpuData();
 }
 
@@ -80,6 +95,54 @@ void Mesh::ReleaseCpuData()
 	std::vector<Vertex>().swap(meshData.vertices);
 	std::vector<uint16_t>().swap(meshData.indices16);
 	std::vector<uint32_t>().swap(meshData.indices32);
+}
+
+void Mesh::CalculateBounds()
+{
+	Vec3 min(FLT_MAX, FLT_MAX, FLT_MAX);
+	Vec3 max(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+	// 最小と最大の座標を求める 
+	for (const Vertex& v : meshData.vertices)
+	{
+		Vec3 pos = v.Position;
+
+		min = Vector::Min(pos, min);
+		max = Vector::Max(pos, max);
+	}
+
+	// AABBを作る 
+	bounds = AABB::FromMinMax(min, max);
+
+	Log::Info(std::format("Mesh bounds: center=({:.3f}, {:.3f}, {:.3f}) extents=({:.3f}, {:.3f}, {:.3f}) vertices={}",
+		bounds.center.x, bounds.center.y, bounds.center.z,
+		bounds.extents.x, bounds.extents.y, bounds.extents.z,
+		meshData.vertices.size()));
+}
+
+AABB Mesh::GetBounds() const
+{
+	return bounds;
+}
+
+MeshData& Mesh::GetMeshData()
+{
+	return meshData;
+}
+
+D3D12_VERTEX_BUFFER_VIEW& Mesh::GetVertexBufferView()
+{
+	return vertexBufferView;
+}
+
+D3D12_INDEX_BUFFER_VIEW& Mesh::GetIndexBufferView()
+{
+	return indexBufferView;
+}
+
+UINT Mesh::GetIndexCount() const
+{
+	return indexCount;
 }
 
 bool Mesh::HasTexture() const
@@ -115,7 +178,7 @@ void Mesh::CreateVertexBuffer(ID3D12Device* device, const std::vector<Vertex>& v
 		&vertexHeapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&vertexResDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST,
+		D3D12_RESOURCE_STATE_COMMON,
 		nullptr,
 		IID_PPV_ARGS_WRT(vertexBuffer)));
 
@@ -156,7 +219,7 @@ void Mesh::CreateIndexBuffer(ID3D12Device* device, const void* indices, size_t c
 		&indexHeapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&indexResDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST,
+		D3D12_RESOURCE_STATE_COMMON,
 		nullptr,
 		IID_PPV_ARGS_WRT(indexBuffer)));
 

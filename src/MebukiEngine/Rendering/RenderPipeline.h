@@ -23,8 +23,16 @@ public:
 	DepthStencilBuffer* GetDepthStencilBuffer() const;
 	RenderTargetBuffer* GetRenderTargetBuffer() const;
 	ImGuiRenderer& GetImGuiRenderer() const;
-	GpuConstants& GetGpuConstants() const { return *gpuConstants; }
-	const winrt::com_ptr<ID3D12Device>& GetDevice() const { return device; }
+
+	GpuConstants& GetGpuConstants() const
+	{
+		return *gpuConstants;
+	}
+
+	const winrt::com_ptr<ID3D12Device>& GetDevice() const
+	{
+		return device;
+	}
 
 private:
 	static constexpr UINT frameBufferCount = 2;

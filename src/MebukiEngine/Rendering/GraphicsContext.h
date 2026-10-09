@@ -8,10 +8,14 @@ public:
 		commandList(cmdList),
 		device(device),
 		aspectRatio(static_cast<float>(windowInfo.width) / static_cast<float>(windowInfo.height))
-	{}
+	{
+	}
 
 	// D3D12デバイスを取得します
-	ID3D12Device* GetDevice() const { return device; }
+	ID3D12Device* GetDevice() const
+	{
+		return device;
+	}
 
 	// 画面のアスペクト比を取得します 
 	float GetAspectRatio() const;

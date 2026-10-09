@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "MeshData.h"
 #include <DirectXTex.h>
+#include "Toolkit/Math/AABB.h"
 
 struct ImageData
 {
@@ -21,17 +22,21 @@ public:
 
 	bool HasTexture() const;
 	bool IsUploaded() const;
-	MeshData& GetMeshData() { return meshData; }
-	D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() { return vertexBufferView; }
-	D3D12_INDEX_BUFFER_VIEW& GetIndexBufferView() { return indexBufferView; }
-	UINT GetIndexCount() const { return indexCount; }
 
+	AABB GetBounds() const;
+
+	MeshData& GetMeshData();
+
+	D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView();
+	D3D12_INDEX_BUFFER_VIEW& GetIndexBufferView();
+
+	UINT GetIndexCount() const;
 	void RecordUpload(ID3D12GraphicsCommandList* commandList);
-
 	void TickUploadBufferRelease();
 
 private:
 	MeshData meshData = {};
+	AABB bounds;
 	bool isUploaded = false;
 
 	// 何フレーム後にUploadBufferをリリースするか 
@@ -54,4 +59,7 @@ private:
 
 	// GPUバッファへ転送し終えた頂点・インデックスをCPU側から解放する
 	void ReleaseCpuData();
+
+	// meshDataの頂点位置からboundsを計算する
+	void CalculateBounds();
 };

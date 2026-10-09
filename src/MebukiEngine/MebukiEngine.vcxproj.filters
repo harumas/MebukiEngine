@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Application">
@@ -87,6 +87,9 @@
     <ClCompile Include="Basic\Profiler.cpp">
       <Filter>Basic</Filter>
     </ClCompile>
+    <ClCompile Include="Basic\Log.cpp">
+      <Filter>Basic</Filter>
+    </ClCompile>
     <ClCompile Include="Basic\UID.cpp">
       <Filter>Basic</Filter>
     </ClCompile>
@@ -166,6 +169,12 @@
     <ClCompile Include="Toolkit\Math\Vec3.cpp">
       <Filter>Toolkit\Math</Filter>
     </ClCompile>
+    <ClCompile Include="Toolkit\Math\AABB.cpp">
+      <Filter>Toolkit\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Toolkit\Math\Frustum.cpp">
+      <Filter>Toolkit\Math</Filter>
+    </ClCompile>
     <ClCompile Include="Toolkit\Mesh\Mesh.cpp">
       <Filter>Toolkit\Mesh</Filter>
     </ClCompile>
@@ -220,6 +229,9 @@
       <Filter>Basic</Filter>
     </ClInclude>
     <ClInclude Include="Basic\Profiler.h">
+      <Filter>Basic</Filter>
+    </ClInclude>
+    <ClInclude Include="Basic\Log.h">
       <Filter>Basic</Filter>
     </ClInclude>
     <ClInclude Include="Basic\EngineService.h">
@@ -341,6 +353,18 @@
       <Filter>Toolkit\Math</Filter>
     </ClInclude>
     <ClInclude Include="Toolkit\Math\Vec3.h">
+      <Filter>Toolkit\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Toolkit\Math\AABB.h">
+      <Filter>Toolkit\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Toolkit\Math\Mathf.h">
+      <Filter>Toolkit\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Toolkit\Math\Vector.h">
+      <Filter>Toolkit\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Toolkit\Math\Frustum.h">
       <Filter>Toolkit\Math</Filter>
     </ClInclude>
     <ClInclude Include="Toolkit\Mathematics.h">

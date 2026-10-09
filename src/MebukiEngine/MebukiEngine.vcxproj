@@ -117,6 +117,7 @@
     <ClInclude Include="Basic\EventListener.h" />
     <ClInclude Include="Basic\DebugHelper.h" />
     <ClInclude Include="Basic\Profiler.h" />
+    <ClInclude Include="Basic\Log.h" />
     <ClInclude Include="Application\WinApplication.h" />
     <ClInclude Include="Toolkit\Actor\ActorService.h" />
     <ClInclude Include="Toolkit\Component\Transform.h" />
@@ -138,6 +139,10 @@
     <ClInclude Include="Toolkit\Component\Renderer.h" />
     <ClInclude Include="Toolkit\Math\MurmurHash64.h" />
     <ClInclude Include="Toolkit\Math\Vec3.h" />
+    <ClInclude Include="Toolkit\Math\AABB.h" />
+    <ClInclude Include="Toolkit\Math\Mathf.h" />
+    <ClInclude Include="Toolkit\Math\Vector.h" />
+    <ClInclude Include="Toolkit\Math\Frustum.h" />
     <ClInclude Include="Toolkit\Mesh\PrimitiveMesh.h" />
     <ClInclude Include="Toolkit\Rendering\MaterialLayout.h" />
     <ClInclude Include="Toolkit\Rendering\ShaderPassPool.h" />
@@ -160,6 +165,7 @@
     <ClCompile Include="Application\GameApplication.cpp" />
     <ClCompile Include="Basic\DebugHelper.cpp" />
     <ClCompile Include="Basic\Profiler.cpp" />
+    <ClCompile Include="Basic\Log.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Toolkit\Actor\ActorRef.cpp" />
     <ClCompile Include="Toolkit\Actor\ActorService.cpp" />
@@ -194,6 +200,8 @@
     <ClCompile Include="Toolkit\Component\Renderer.cpp" />
     <ClCompile Include="Toolkit\Mesh\PrimitiveMesh.cpp" />
     <ClCompile Include="Toolkit\Math\Vec3.cpp" />
+    <ClCompile Include="Toolkit\Math\AABB.cpp" />
+    <ClCompile Include="Toolkit\Math\Frustum.cpp" />
     <ClCompile Include="Toolkit\Rendering\MaterialLayout.cpp" />
     <ClCompile Include="Toolkit\Rendering\Texture.cpp" />
     <ClCompile Include="Toolkit\World\World.cpp" />

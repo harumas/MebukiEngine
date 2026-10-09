@@ -7,17 +7,23 @@ class ActorService;
 class ActorRef
 {
 public:
-	ActorRef() : handle{}, service(nullptr) {}
+	ActorRef() : handle{}, service(nullptr)
+	{
+	}
 
 	ActorRef(ActorHandle handle, ActorService* service)
 		: handle(handle), service(service)
-	{}
+	{
+	}
 
 	Actor* operator->();
 	Actor& operator*();
 	explicit operator bool() const;
 
-	ActorHandle GetHandle() const { return handle; }
+	ActorHandle GetHandle() const
+	{
+		return handle;
+	}
 
 private:
 	ActorHandle handle;
