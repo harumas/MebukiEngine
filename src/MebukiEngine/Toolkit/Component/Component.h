@@ -1,24 +1,41 @@
 #pragma once
-#include <Rendering/Rendering.h>
 #include <Toolkit/Entity/Entity.h>
-
-#include "Rendering/GpuConstants.h"
+#include <Toolkit/Actor/ActorRef.h>
 
 class Actor;
+class ActorRef;
+class GraphicsContext;
+class GpuConstants;
+class RenderQueue;
 
 class Component : public Entity
 {
 public:
-	std::weak_ptr<Actor> gameObject;
+	ActorRef actor;
 
-	explicit Component(const std::shared_ptr<Actor>& actorRef);
+	explicit Component(ActorRef actorRef);
 
 	virtual ~Component() = default;
-	virtual void OnCreate() {}
-	virtual void OnUpdate() {}
-	virtual void OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants) {}
-	virtual void OnDraw(const GraphicsContext& context, const GpuConstants& gpuConstants) {}
-	virtual void OnDestroy() {}
+
+	virtual void OnCreate()
+	{
+	}
+
+	virtual void OnUpdate(float deltaTime)
+	{
+	}
+
+	virtual void OnPreDraw(const GraphicsContext& context, GpuConstants& gpuConstants)
+	{
+	}
+
+	virtual void OnDraw(RenderQueue& renderQueue)
+	{
+	}
+
+	virtual void OnDestroy()
+	{
+	}
 
 private:
 	Component(const Component&) = delete;

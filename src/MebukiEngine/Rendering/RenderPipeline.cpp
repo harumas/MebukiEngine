@@ -1,6 +1,6 @@
 #include "RenderPipeline.h"
-#include "GraphicsDevice.h"
 #include "RegisterType.h"
+#include "Basic/Profiler.h"
 
 void RenderPipeline::Initialize(const WindowInfo& windowInfo)
 {
@@ -10,7 +10,6 @@ void RenderPipeline::Initialize(const WindowInfo& windowInfo)
 
 	// D3D12デバイスの作成
 	CreateD3D12Device(dxgiFactory.get(), device);
-	GraphicsDevice::Bind(device);
 
 	// GPU定数バッファの作成
 	gpuConstants = std::make_unique<GpuConstants>(device.get());
@@ -83,7 +82,7 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 	// ImGui フレーム開始
 	imguiRenderer->BeginFrame();
 
-	GraphicsContext context(commandList, windowInfo);
+	GraphicsContext context(commandList, device.get(), windowInfo);
 
 	onRenderProcess(context, *gpuConstants);
 
@@ -95,7 +94,10 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 	commandList->ResourceBarrier(1, &barrierDepth2SRV);
 	commandList->OMSetRenderTargets(1, &rtvHandle, true, nullptr);
 
-	onPostRenderProcess(context, *gpuConstants);
+	{
+		ScopedTimer timer("  Frame: post render (debug depth etc.)");
+		onPostRenderProcess(context, *gpuConstants);
+	}
 
 	// 深度バッファの状態をDEPTH_WRITEに戻す
 	D3D12_RESOURCE_BARRIER barrierSRV2Depth = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -105,7 +107,10 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 	commandList->ResourceBarrier(1, &barrierSRV2Depth);
 
 	// ImGui 描画（ポストプロセス後、Present前）
-	imguiRenderer->EndFrame(commandList.get());
+	{
+		ScopedTimer timer("  Frame: ImGui");
+		imguiRenderer->EndFrame(commandList.get());
+	}
 
 	// バックバッファは画面更新に使用される
 	const D3D12_RESOURCE_BARRIER& barrier2RTPresent = renderTargetBuffer->GetResourceBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -115,12 +120,42 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 
 	// コマンドリストの実行
 	ID3D12CommandList* commandLists[] = { commandList.get() };
-	commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+	{
+		ScopedTimer timer("  Frame: ExecuteCommandLists");
+		commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+	}
 
 	// フレームバッファを入れ替える 
-	winrt::check_hresult(swapChain->Present(1, 0));
+	{
+		ScopedTimer timer("  Frame: Present (vsync)");
+		winrt::check_hresult(swapChain->Present(1, 0));
+	}
 
-	WaitForNextFrame();
+	{
+		ScopedTimer timer("  Frame: wait for GPU");
+		WaitForNextFrame();
+	}
+}
+
+void RenderPipeline::Resize(UINT width, UINT height)
+{
+	// 全バックバッファ分、GPUの処理が完全に終わるまで待つ
+	// (ResizeBuffersを呼ぶには、全バッファへの参照がGPU上でも解放されている必要がある)
+	for (UINT i = 0; i < frameBufferCount; ++i)
+	{
+		WaitForFenceAt(i);
+	}
+
+	// RTVがバッファを参照したままだとResizeBuffersが失敗するため、先に解放する
+	renderTargetBuffer.reset();
+
+	DXGI_SWAP_CHAIN_DESC desc = {};
+	winrt::check_hresult(swapChain->GetDesc(&desc));
+	winrt::check_hresult(swapChain->ResizeBuffers(frameBufferCount, width, height, desc.BufferDesc.Format, desc.Flags));
+
+	// 新しいサイズでレンダーターゲット・デプスステンシルバッファを作り直す
+	renderTargetBuffer = std::make_unique<RenderTargetBuffer>(device.get(), swapChain.get(), frameBufferCount);
+	depthStencilBuffer = std::make_unique<DepthStencilBuffer>(device.get(), width, height);
 }
 
 void RenderPipeline::Finalize()
@@ -144,6 +179,11 @@ ID3D12RootSignature* RenderPipeline::GetRootSignature() const
 DepthStencilBuffer* RenderPipeline::GetDepthStencilBuffer() const
 {
 	return depthStencilBuffer.get();
+}
+
+RenderTargetBuffer* RenderPipeline::GetRenderTargetBuffer() const
+{
+	return renderTargetBuffer.get();
 }
 
 ImGuiRenderer& RenderPipeline::GetImGuiRenderer() const
@@ -178,6 +218,7 @@ void RenderPipeline::CreateRootSignature()
 		{ ParameterType::CBV, RegisterType::PerTransform, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
 		{ ParameterType::CBV, RegisterType::PerMaterial, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL, false, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC },
 		{ ParameterType::SRV, 0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_PIXEL, true, D3D12_DESCRIPTOR_RANGE_FLAG_NONE },
+		{ ParameterType::SRV, 1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_PIXEL, true, D3D12_DESCRIPTOR_RANGE_FLAG_NONE },
 	});
 }
 
@@ -221,16 +262,20 @@ void RenderPipeline::CreateCommandList()
 
 void RenderPipeline::WaitForFence()
 {
-	UINT backBufferIndex = renderTargetBuffer->GetBackBufferIndex();
+	WaitForFenceAt(renderTargetBuffer->GetBackBufferIndex());
+}
+
+void RenderPipeline::WaitForFenceAt(UINT index)
+{
 	// キューにシグナルコマンドをスケジュールする
-	winrt::check_hresult(commandQueue->Signal(fence.get(), fenceValue[backBufferIndex]));
+	winrt::check_hresult(commandQueue->Signal(fence.get(), fenceValue[index]));
 
 	// フェンスの処理が終わるまで待つ
-	winrt::check_hresult(fence->SetEventOnCompletion(fenceValue[backBufferIndex], fenceEvent));
+	winrt::check_hresult(fence->SetEventOnCompletion(fenceValue[index], fenceEvent));
 	WaitForSingleObjectEx(fenceEvent, INFINITE, FALSE);
 
 	// 現在のフレームのフェンス値を増加させる
-	fenceValue[backBufferIndex]++;
+	fenceValue[index]++;
 }
 
 void RenderPipeline::WaitForNextFrame()

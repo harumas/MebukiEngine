@@ -3,6 +3,7 @@ struct DirectionalLight
     float3 direction;
     float3 color;
     float3 ambientLight;
+    matrix lightViewProj;
 };
 
 struct PointLight
@@ -33,6 +34,9 @@ cbuffer cbuff2 : register(b2)
 // アルベド用テクスチャ
 Texture2D gTexture : register(t0);
 
+// シャドウマップ (ライト視点からの深度)
+Texture2D shadowMap : register(t1);
+
 // サンプラー
 SamplerState gSampler : register(s0);
 
@@ -42,9 +46,11 @@ struct PSInput
     float3 normal : NORMAL;
     float2 uv : TEXCOORD;
     float4 worldPos : TEXCOORD1;
+    float4 shadowPos : TEXCOORD2;
 };
 
 float3 CalcLambertDiffuse(float3 lightDirection, float3 lightColor, float3 normal);
+float CalcShadowFactor(float4 shadowPos);
 
 PSInput VSMain(float4 pos : POSITION, float3 normal : NORMAL, float2 uv : TEXCOORD)
 {
@@ -53,16 +59,21 @@ PSInput VSMain(float4 pos : POSITION, float3 normal : NORMAL, float2 uv : TEXCOO
     result.position = mul(viewproj, result.worldPos);
     result.normal = normalize(mul(world, normal));
     result.uv = uv;
+    result.shadowPos = mul(directionalLight.lightViewProj, result.worldPos);
     return result;
 }
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-    // UV座標からサンプリング
-    float4 color = gTexture.Sample(gSampler, input.uv);
+    // UV座標からサンプリングし、マテリアルのBaseColorで色を乗算する
+    float4 color = gTexture.Sample(gSampler, input.uv) * baseColor;
      
     float3 directionNormal = normalize(directionalLight.direction);
     float3 diffuseDirection = CalcLambertDiffuse(directionNormal, directionalLight.color, input.normal);
+
+    // シャドウマップと比較し、影の中なら平行光源の拡散反射を弱める
+    float shadowFactor = CalcShadowFactor(input.shadowPos);
+    diffuseDirection *= shadowFactor;
 
     float3 lightDir = normalize(input.worldPos - pointLight.position);
     float3 distance = length(input.worldPos - pointLight.position);
@@ -96,6 +107,30 @@ float3 CalcLambertDiffuse(float3 lightDirection, float3 lightColor, float3 norma
 
     // 拡散反射光を計算する
     return lightColor * t;
+}
+
+float CalcShadowFactor(float4 shadowPos)
+{
+    // NDC(-1〜1)からUV(0〜1)に変換。Yは反転が必要(NDCのY+は上、UVのV+は下)
+    float2 shadowUV = shadowPos.xy * 0.5 + 0.5;
+    shadowUV.y = 1.0 - shadowUV.y;
+
+    // ライトの正射影の範囲外は判定しない(WRAPサンプラーで無関係な場所を読まないようにする)
+    if (shadowUV.x < 0.0 || shadowUV.x > 1.0 || shadowUV.y < 0.0 || shadowUV.y > 1.0)
+    {
+        return 1.0;
+    }
+
+    // XMMatrixOrthographicLHのZは0〜1の範囲なので、そのまま比較できる
+    float storedDepth = shadowMap.Sample(gSampler, shadowUV).r;
+
+    if (shadowPos.z > storedDepth)
+    {
+        // 自分より手前(ライトに近い側)に何かある = 影の中
+        return 0.0;
+    }
+
+    return 1.0;
 }
 
 

@@ -2,29 +2,31 @@
 
 #include "MeshData.h"
 #include "StreamReader.h"
+#include "Basic/Profiler.h"
 
 
-MeshData ModelLoader::Load(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology)
+std::vector<MeshData> ModelLoader::Load(const std::string& path, D3D12_PRIMITIVE_TOPOLOGY topology)
 {
-	BinaryData data = LoadBinary(path);
-
-	MeshData meshData;
-	meshData.vertices = ConvertVertices(data);
-	meshData.topology = topology;
-	meshData.use32bitIndex = data.use32bitIndex;
-
-	if (data.use32bitIndex)
+	std::unique_ptr<Microsoft::glTF::GLBResourceReader> resourceReader;
+	Microsoft::glTF::Document document;
 	{
-		meshData.indices32 = std::move(data.indices32);
-	}
-	else
-	{
-		meshData.indices16 = std::move(data.indices16);
+		ScopedTimer timer("  model: open glb + parse JSON");
+		resourceReader = CreateResourceReader(path);
+		document = LoadDocument(resourceReader);
 	}
 
-	meshData.textureBytes = data.textureBytes;
+	std::vector<MeshData> meshDataList;
+	textureCache.clear();
 
-	return meshData;
+	// シーンのルートノードから再帰的に辿る (メッシュはノードから参照されて初めて配置が決まる)
+	const Microsoft::glTF::Scene& scene = document.GetDefaultScene();
+
+	for (const std::string& rootNodeId : scene.nodes)
+	{
+		CollectNode(document, *resourceReader, rootNodeId, DirectX::XMMatrixIdentity(), topology, meshDataList);
+	}
+
+	return meshDataList;
 }
 
 std::vector<Vertex> ModelLoader::ConvertVertices(const BinaryData& binaryData)
@@ -72,18 +74,140 @@ std::vector<Vertex> ModelLoader::ConvertVertices(const BinaryData& binaryData)
 	return vertices;
 }
 
-ModelLoader::BinaryData ModelLoader::LoadBinary(const std::string& path)
+DirectX::XMMATRIX ModelLoader::GetNodeLocalMatrix(const Microsoft::glTF::Node& node)
 {
-	// ストリームを作成
-	const std::unique_ptr<Microsoft::glTF::GLBResourceReader> resourceReader = CreateResourceReader(path);
+	switch (node.GetTransformationType())
+	{
+	case Microsoft::glTF::TRANSFORMATION_MATRIX:
+	{
+		// glTFの行列は列優先。行優先のXMFLOAT4X4にそのまま詰めると転置になり、
+		// このエンジンが使っている行ベクトル規約(Transform::GetMatrixと同じ)の行列になる
+		const std::array<float, 16>& v = node.matrix.values;
+		const XMFLOAT4X4 m(
+			v[0], v[1], v[2], v[3],
+			v[4], v[5], v[6], v[7],
+			v[8], v[9], v[10], v[11],
+			v[12], v[13], v[14], v[15]);
 
-	// ドキュメントを読み込み(メタデータ的なやつ)
-	Microsoft::glTF::Document document = LoadDocument(resourceReader);
+		return XMLoadFloat4x4(&m);
+	}
 
-	//単一メッシュだけ読み込む 
-	auto mesh = document.meshes[0];
-	auto primitive = mesh.primitives[0];
+	case Microsoft::glTF::TRANSFORMATION_TRS:
+	{
+		const XMVECTOR scale = XMVectorSet(node.scale.x, node.scale.y, node.scale.z, 0.0f);
+		const XMVECTOR rotation = XMVectorSet(node.rotation.x, node.rotation.y, node.rotation.z, node.rotation.w);
+		const XMVECTOR translation = XMVectorSet(node.translation.x, node.translation.y, node.translation.z, 0.0f);
 
+		return XMMatrixScalingFromVector(scale)
+			* XMMatrixRotationQuaternion(rotation)
+			* XMMatrixTranslationFromVector(translation);
+	}
+
+	default:
+		return XMMatrixIdentity();
+	}
+}
+
+void ModelLoader::CollectNode(
+	Microsoft::glTF::Document& document,
+	Microsoft::glTF::GLBResourceReader& resourceReader,
+	const std::string& nodeId,
+	const DirectX::XMMATRIX& parentMatrix,
+	D3D12_PRIMITIVE_TOPOLOGY topology,
+	std::vector<MeshData>& meshDataList)
+{
+	const Microsoft::glTF::Node& node = document.nodes.Get(nodeId);
+
+	// 行ベクトル規約なので「ローカル→親」の順で掛ける
+	const XMMATRIX worldMatrix = GetNodeLocalMatrix(node) * parentMatrix;
+
+	if (!node.meshId.empty())
+	{
+		const Microsoft::glTF::Mesh& mesh = document.meshes.Get(node.meshId);
+
+		for (const auto& primitive : mesh.primitives)
+		{
+			BinaryData data;
+			{
+				ScopedTimer timer("  model: read accessors");
+				data = ReadPrimitive(document, resourceReader, primitive);
+			}
+
+			MeshData meshData;
+			{
+				ScopedTimer timer("  model: convert vertices");
+				meshData.vertices = ConvertVertices(data);
+			}
+			meshData.topology = topology;
+			meshData.use32bitIndex = data.use32bitIndex;
+
+			if (data.use32bitIndex)
+			{
+				meshData.indices32 = std::move(data.indices32);
+			}
+			else
+			{
+				meshData.indices16 = std::move(data.indices16);
+			}
+
+			XMStoreFloat4x4(&meshData.nodeTransform, worldMatrix);
+			{
+				ScopedTimer timer("  model: read texture bytes");
+				meshData.baseColorTexture = GetBaseColorTexture(document, resourceReader, primitive);
+			}
+
+			meshDataList.push_back(std::move(meshData));
+		}
+	}
+
+	for (const std::string& childId : node.children)
+	{
+		CollectNode(document, resourceReader, childId, worldMatrix, topology, meshDataList);
+	}
+}
+
+std::shared_ptr<ModelTexture> ModelLoader::GetBaseColorTexture(
+	Microsoft::glTF::Document& document,
+	Microsoft::glTF::GLBResourceReader& resourceReader,
+	const Microsoft::glTF::MeshPrimitive& primitive)
+{
+	if (primitive.materialId.empty())
+	{
+		return nullptr;
+	}
+
+	// プリミティブ → マテリアル → テクスチャ → 画像 の順に辿る
+	const Microsoft::glTF::Material& material = document.materials.Get(primitive.materialId);
+	const std::string& textureId = material.metallicRoughness.baseColorTexture.textureId;
+
+	if (textureId.empty())
+	{
+		return nullptr;
+	}
+
+	const std::string& imageId = document.textures.Get(textureId).imageId;
+
+	// 同じ画像は1つのModelTextureを共有する (プリミティブごとに作るとVRAMが描画数分必要になる)
+	if (const auto it = textureCache.find(imageId); it != textureCache.end())
+	{
+		return it->second;
+	}
+
+	const Microsoft::glTF::Image& image = document.images.Get(imageId);
+	const Microsoft::glTF::BufferView& view = document.bufferViews.Get(image.bufferViewId);
+
+	auto modelTexture = std::make_shared<ModelTexture>();
+	modelTexture->imageBytes = resourceReader.ReadBinaryData<uint8_t>(document, view);
+
+	textureCache.emplace(imageId, modelTexture);
+	return modelTexture;
+}
+
+ModelLoader::BinaryData ModelLoader::ReadPrimitive(
+	Microsoft::glTF::Document& document,
+	Microsoft::glTF::GLBResourceReader& resourceReader,
+	const Microsoft::glTF::MeshPrimitive& primitive)
+{
 	std::string accessorId;
 	BinaryData binaryData;
 
@@ -91,21 +215,21 @@ ModelLoader::BinaryData ModelLoader::LoadBinary(const std::string& path)
 	if (primitive.TryGetAttributeAccessorId(Microsoft::glTF::ACCESSOR_POSITION, accessorId))
 	{
 		auto accessor = document.accessors.Get(accessorId);
-		binaryData.positions = resourceReader->ReadBinaryData<float>(document, accessor);
+		binaryData.positions = resourceReader.ReadBinaryData<float>(document, accessor);
 	}
 
 	// 法線
 	if (primitive.TryGetAttributeAccessorId(Microsoft::glTF::ACCESSOR_NORMAL, accessorId))
 	{
 		auto accessor = document.accessors.Get(accessorId);
-		binaryData.normals = resourceReader->ReadBinaryData<float>(document, accessor);
+		binaryData.normals = resourceReader.ReadBinaryData<float>(document, accessor);
 	}
 
-	// UV 
+	// UV
 	if (primitive.TryGetAttributeAccessorId(Microsoft::glTF::ACCESSOR_TEXCOORD_0, accessorId))
 	{
 		auto accessor = document.accessors.Get(accessorId);
-		binaryData.uvs = resourceReader->ReadBinaryData<float>(document, accessor);
+		binaryData.uvs = resourceReader.ReadBinaryData<float>(document, accessor);
 	}
 
 	// インデックス
@@ -116,30 +240,18 @@ ModelLoader::BinaryData ModelLoader::LoadBinary(const std::string& path)
 		// インデックスは型によって分岐 (unsigned short / unsigned int)
 		if (accessor.componentType == Microsoft::glTF::COMPONENT_UNSIGNED_SHORT)
 		{
-			binaryData.indices16 = resourceReader->ReadBinaryData<uint16_t>(document, accessor);
+			binaryData.indices16 = resourceReader.ReadBinaryData<uint16_t>(document, accessor);
 			binaryData.use32bitIndex = false;
 		}
 		else if (accessor.componentType == Microsoft::glTF::COMPONENT_UNSIGNED_INT)
 		{
-			binaryData.indices32 = resourceReader->ReadBinaryData<uint32_t>(document, accessor);
+			binaryData.indices32 = resourceReader.ReadBinaryData<uint32_t>(document, accessor);
 			binaryData.use32bitIndex = true;
 		}
 		else
 		{
 			throw std::runtime_error("Unsupported index component type");
 		}
-	}
-
-	// テクスチャ読み込み (最初の画像のみ対応)
-	if (!document.images.Elements().empty())
-	{
-		const Microsoft::glTF::Image& image = document.images.Elements().front(); // 例: 最初の画像
-
-		// bufferViewIdから対応するBufferViewを取得
-		const Microsoft::glTF::BufferView& view = document.bufferViews.Get(image.bufferViewId);
-
-		// resources から実データにアクセス
-		binaryData.textureBytes = resourceReader->ReadBinaryData<uint8_t>(document, view);
 	}
 
 	return binaryData;

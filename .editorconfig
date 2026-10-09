@@ -1,0 +1,12 @@
+root = true
+
+[*.{h,cpp}]
+indent_style = tab
+indent_size = 4
+
+# Visual Studio の C++ 整形: 関数・ブロックの波括弧は改行し、1行ブロックを許可しない
+cpp_new_line_before_open_brace_namespace = new_line
+cpp_new_line_before_open_brace_type = new_line
+cpp_new_line_before_open_brace_function = new_line
+cpp_new_line_before_open_brace_block = new_line
+cpp_wrap_preserve_blocks = never

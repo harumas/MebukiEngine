@@ -6,16 +6,14 @@ Material::Material() :
 	shaderPass(nullptr),
 	propertyData(0)
 
-{
-}
+{}
 
 Material::Material(uint32_t handleId, const std::shared_ptr<ShaderPass>& shaderPass) :
 	handleId(handleId),
 	isDirty(true),
 	shaderPass(shaderPass),
 	propertyData(shaderPass->GetLayout().GetTotalSize())
-{
-}
+{}
 
 void Material::SetPipelineState(const GraphicsContext& context) const
 {

@@ -4,9 +4,9 @@
 GpuConstants::GpuConstants(ID3D12Device* device) :
 	frameData(),
 	transformData(),
-	frameCB(RegisterType::PerFrame, 1),
-	transformCB(RegisterType::PerTransform, MAX_RENDERING_COUNT),
-	materialCB(RegisterType::PerMaterial, MAX_RENDERING_COUNT),
+	frameCB(device, RegisterType::PerFrame, 1),
+	transformCB(device, RegisterType::PerTransform, MAX_RENDERING_COUNT),
+	materialCB(device, RegisterType::PerMaterial, MAX_RENDERING_COUNT),
 	shaderResourceBuffer(device)
 {
 	descriptorHeaps.emplace_back(shaderResourceBuffer.GetDescriptorHeap());
@@ -53,11 +53,14 @@ void GpuConstants::UploadTransformBuffer()
 
 void GpuConstants::UploadMaterialBuffer(const void* buffer, size_t bufferSize, uint32_t offset)
 {
-	// マテリアル単位のオフセットをバイト単位に変換する 
-	UINT alignedSize = (bufferSize + 255) & ~255; // 256切り上げ
-	uint32_t byteOffset = offset * alignedSize;
+	// 1マテリアル分のスロット(256バイト)を超えると、隣のマテリアルを上書きしてしまう
+	if (bufferSize > sizeof(MaterialPropertyData))
+	{
+		throw std::out_of_range("GpuConstants: Material property data exceeds 256 bytes");
+	}
 
-	materialCB.UploadBufferData(buffer, alignedSize, byteOffset);
+	// コピーするのは実データの分だけ (256に切り上げると、元のバッファの範囲外を読んでしまう)
+	materialCB.UploadBufferData(buffer, bufferSize, offset);
 }
 
 void GpuConstants::SetFrameCBV(const GraphicsContext& context) const
@@ -84,6 +87,12 @@ void GpuConstants::SetGraphicsRootDescriptorTable(const GraphicsContext& context
 {
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = shaderResourceBuffer.GetGPUDescriptorHandle(offset);
 	context.SetGraphicsRootDescriptorTable(RegisterType::SRV, gpuHandle);
+}
+
+void GpuConstants::SetShadowMapSRV(const GraphicsContext& context, UINT offset) const
+{
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = shaderResourceBuffer.GetGPUDescriptorHandle(offset);
+	context.SetGraphicsRootDescriptorTable(RegisterType::ShadowSRV, gpuHandle);
 }
 
 const std::vector<ID3D12DescriptorHeap*>& GpuConstants::GetDescriptorHeaps() const

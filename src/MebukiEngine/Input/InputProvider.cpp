@@ -40,7 +40,7 @@ void InputProvider::Process(const LPARAM& lparam)
 	if (GetForegroundWindow() != hwnd)
 		return;
 
-	UINT bufferSize = g_bufferSize;
+	UINT bufferSize = sizeof(rawBuffer);
 
 	if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, rawBuffer, &bufferSize, sizeof(RAWINPUTHEADER)) == (UINT)-1)
 		return;

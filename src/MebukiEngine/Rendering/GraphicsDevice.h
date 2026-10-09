@@ -1,15 +1,21 @@
-﻿#pragma once
+#pragma once
 
+// D3D12 デバイスの薄いラッパー。EngineService に Register して使う。
 class GraphicsDevice
 {
 public:
-	static void	Bind(const winrt::com_ptr<ID3D12Device>& device);
-	static ID3D12Device* Get() { return device.get(); }
+	explicit GraphicsDevice(winrt::com_ptr<ID3D12Device> device) : device(std::move(device))
+	{
+	}
 
-	GraphicsDevice() = delete;
-	~GraphicsDevice() = delete;
+	ID3D12Device* Get() const
+	{
+		return device.get();
+	}
+
+	GraphicsDevice(const GraphicsDevice&) = delete;
+	GraphicsDevice& operator=(const GraphicsDevice&) = delete;
 
 private:
-	inline static winrt::com_ptr<ID3D12Device> device;
+	winrt::com_ptr<ID3D12Device> device;
 };
-

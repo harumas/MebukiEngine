@@ -1,56 +1,69 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="ソース ファイル">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="Component">
+      <UniqueIdentifier>{C474E733-E7CA-4949-9B38-20BB56986AD7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ヘッダー ファイル">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="ShaderPass">
+      <UniqueIdentifier>{0B1BCEE5-6C84-4672-94E1-C38730E66A90}</UniqueIdentifier>
     </Filter>
-    <Filter Include="リソース ファイル">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{C0386892-1363-4D43-98CF-E9EF26C4AC71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{2E1A1F9D-6C1A-4B9E-9B7D-7C9B2E3F4A1B}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="TestWorld.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Component\DepthDebugComponent.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="Component\InputDebugComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\FirstPersonCamera.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="TestWorld.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="TestWorld.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Component\DepthDebugComponent.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\InputDebugComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\FirstPersonCamera.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h" />
     <ClInclude Include="ShaderPass\DebugDepthPass.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ShaderPass</Filter>
     </ClInclude>
     <ClInclude Include="ShaderPass\HalfLambertPass.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ShaderPass</Filter>
     </ClInclude>
     <ClInclude Include="ShaderPass\SkyboxPass.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ShaderPass</Filter>
     </ClInclude>
+    <ClInclude Include="TestWorld.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Shaders\DebugDepth.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\HalfLambertShaders.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Skybox.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\Downloads\sky_14_2k\sky_14_2k.png">
-      <Filter>リソース ファイル</Filter>
+      <Filter>ThirdParty</Filter>
     </Image>
   </ItemGroup>
 </Project>

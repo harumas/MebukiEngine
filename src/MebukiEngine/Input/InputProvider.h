@@ -15,8 +15,7 @@ public:
 
 private:
 	HWND hwnd;
-	UINT  g_bufferSize = 64 * sizeof(RAWINPUT);
-	alignas(8) uint8_t rawBuffer[64] = {};
+	alignas(8) uint8_t rawBuffer[sizeof(RAWINPUT)] = {};
 
 	// キーボード入力バッファ 
 	std::bitset<256> keysFirstBuffer = {}, keysSecondBuffer = {};

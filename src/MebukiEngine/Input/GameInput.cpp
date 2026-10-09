@@ -35,3 +35,13 @@ bool GameInput::GetMouseButtonUp(MouseButton button)
 {
 	return !FastGetMouseBit(GameInput::context->mouseCurrentBuffer, button) && FastGetMouseBit(GameInput::context->mousePreviousBuffer, button);
 }
+
+long GameInput::GetMouseDeltaX()
+{
+	return GameInput::context->mouseDeltaX;
+}
+
+long GameInput::GetMouseDeltaY()
+{
+	return GameInput::context->mouseDeltaY;
+}

@@ -1,4 +1,5 @@
 #include "ShaderPass.h"
+#include <d3dcompiler.h>
 
 #include "Toolkit/Mesh/MeshData.h"
 

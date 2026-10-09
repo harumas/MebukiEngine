@@ -1,6 +1,8 @@
 #include "PointLight.h"
+#include <Rendering/GraphicsContext.h>
+#include <Rendering/GpuConstants.h>
 
-PointLight::PointLight(const std::shared_ptr<Actor>& actorRef) : Component(actorRef)
+PointLight::PointLight(ActorRef actorRef) : Component(actorRef)
 {
 }
 

@@ -1,6 +1,6 @@
 ﻿#include "PrimitiveMesh.h"
 
-Mesh PrimitiveMesh::CreateSimpleTriangle()
+Mesh PrimitiveMesh::CreateSimpleTriangle(ID3D12Device* device)
 {
 	using namespace DirectX;
 	// 頂点データ
@@ -13,11 +13,11 @@ Mesh PrimitiveMesh::CreateSimpleTriangle()
 	const std::vector<unsigned short> indices = {
 		0,1,2
 	};
-	Mesh mesh(vertices, indices, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	Mesh mesh(device, vertices, indices, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	return mesh;
 }
 
-Mesh PrimitiveMesh::CreateCube(float size)
+Mesh PrimitiveMesh::CreateCube(ID3D12Device* device, float size)
 {
 	const float h = size * 0.5f;
 
@@ -76,7 +76,7 @@ Mesh PrimitiveMesh::CreateCube(float size)
 		20,21,22, 20,22,23
 	};
 
-	Mesh mesh(vertices, indices, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	Mesh mesh(device, vertices, indices, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	return mesh;
 }
 

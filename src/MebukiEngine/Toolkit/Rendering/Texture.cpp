@@ -1,7 +1,7 @@
 ﻿#include "Texture.h"
 
 #include "Rendering/GraphicsContext.h"
-#include "Rendering/GraphicsDevice.h"
+#include "Basic/Profiler.h"
 
 void Texture::Create(const GraphicsContext& context, const std::wstring& path)
 {
@@ -9,30 +9,44 @@ void Texture::Create(const GraphicsContext& context, const std::wstring& path)
 	DirectX::TexMetadata metadata;
 
 	// 画像ファイルを読み込んでデコード
-	winrt::check_hresult(DirectX::LoadFromWICFile(
-		path.c_str(),
-		DirectX::WIC_FLAGS_NONE,
-		&metadata,
-		scratch
-	));
+	{
+		ScopedTimer timer("  texture: decode");
+		// FORCE_RGB:    BGRAではなくRGBAでデコードさせる
+		// IGNORE_SRGB:  PNGにsRGBチャンクがあると_SRGB形式になり、UNORMへのConvertでガンマ変換が走ってしまう
+		// どちらもConvertを避けるため (DebugのDirectXTexでは1枚150msかかっていた)
+		winrt::check_hresult(DirectX::LoadFromWICFile(
+			path.c_str(),
+			DirectX::WIC_FLAGS_FORCE_RGB | DirectX::WIC_FLAGS_IGNORE_SRGB,
+			&metadata,
+			scratch
+		));
+	}
 
-	DirectX::ScratchImage convertedScratch;
+	// FORCE_RGBでも16bit PNGなどはRGBA8にならないので、その場合だけ変換する
+	// (同じフォーマットへのConvertは失敗するため、無条件には呼べない)
+	if (metadata.format != DXGI_FORMAT_R8G8B8A8_UNORM)
+	{
+		DirectX::ScratchImage convertedScratch;
 
-	// RGBAに変換
-	DirectX::Convert(
-		scratch.GetImages(),        // 元の画像
-		scratch.GetImageCount(),
-		metadata,
-		DXGI_FORMAT_R8G8B8A8_UNORM, // 変換先フォーマット
-		DirectX::TEX_FILTER_DEFAULT,
-		0.0f,
-		convertedScratch
-	);
+		{
+			ScopedTimer timer("  texture: convert to RGBA");
+			winrt::check_hresult(DirectX::Convert(
+				scratch.GetImages(),        // 元の画像
+				scratch.GetImageCount(),
+				metadata,
+				DXGI_FORMAT_R8G8B8A8_UNORM, // 変換先フォーマット
+				DirectX::TEX_FILTER_DEFAULT,
+				0.0f,
+				convertedScratch
+			));
+		}
 
-	metadata = convertedScratch.GetMetadata();
+		CreateUploadResources(context, convertedScratch, convertedScratch.GetMetadata());
+		return;
+	}
 
 	// GPUに転送するためのリソースを作成
-	CreateUploadResources(context, convertedScratch, metadata);
+	CreateUploadResources(context, scratch, metadata);
 }
 
 void Texture::Create(const GraphicsContext& context, const std::vector<uint8_t>& byteData)
@@ -41,12 +55,37 @@ void Texture::Create(const GraphicsContext& context, const std::vector<uint8_t>&
 	DirectX::ScratchImage scratch;
 
 	// WICを使ってメモリ上のPNG/JPEGデータをデコード
-	winrt::check_hresult(DirectX::LoadFromWICMemory(
-		byteData.data(),
-		byteData.size(),                  // PNG/JPEGのバイト列
-		DirectX::WIC_FLAGS_NONE,            // 読み込みフラグ
-		&metadata, scratch                  // 出力
-	));
+	{
+		ScopedTimer timer("  texture: decode");
+		winrt::check_hresult(DirectX::LoadFromWICMemory(
+			byteData.data(),
+			byteData.size(),                  // PNG/JPEGのバイト列
+			DirectX::WIC_FLAGS_FORCE_RGB | DirectX::WIC_FLAGS_IGNORE_SRGB, // 理由はパス指定版のCreateを参照
+			&metadata, scratch                  // 出力
+		));
+	}
+
+	// SRVはR8G8B8A8で作るので、PNGの種類によってBGRA等でデコードされた場合は変換する
+	if (metadata.format != DXGI_FORMAT_R8G8B8A8_UNORM)
+	{
+		DirectX::ScratchImage convertedScratch;
+
+		{
+			ScopedTimer timer("  texture: convert to RGBA");
+			winrt::check_hresult(DirectX::Convert(
+				scratch.GetImages(),
+				scratch.GetImageCount(),
+				metadata,
+				DXGI_FORMAT_R8G8B8A8_UNORM,
+				DirectX::TEX_FILTER_DEFAULT,
+				0.0f,
+				convertedScratch
+			));
+		}
+
+		CreateUploadResources(context, convertedScratch, convertedScratch.GetMetadata());
+		return;
+	}
 
 	// GPUに転送するためのリソースを作成
 	CreateUploadResources(context, scratch, metadata);
@@ -59,6 +98,8 @@ ID3D12Resource* Texture::GetTextureResource()
 
 void Texture::CreateUploadResources(const GraphicsContext& context, const DirectX::ScratchImage& scratch, const DirectX::TexMetadata& metadata)
 {
+	ScopedTimer timer("  texture: create GPU resource + upload");
+
 	// デコード済みの画像データを取得
 	const DirectX::Image* image = scratch.GetImage(0, 0, 0);
 
@@ -73,7 +114,7 @@ void Texture::CreateUploadResources(const GraphicsContext& context, const Direct
 	auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
 	// テクスチャ用リソースの生成
-	winrt::check_hresult(GraphicsDevice::Get()->CreateCommittedResource(
+	winrt::check_hresult(context.GetDevice()->CreateCommittedResource(
 		&heapProps, // GPU用
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
@@ -85,7 +126,7 @@ void Texture::CreateUploadResources(const GraphicsContext& context, const Direct
 	std::vector<D3D12_SUBRESOURCE_DATA> subResources;
 
 	// サブリソース情報を用意
-	winrt::check_hresult(DirectX::PrepareUpload(GraphicsDevice::Get(), scratch.GetImages(), scratch.GetImageCount(),
+	winrt::check_hresult(DirectX::PrepareUpload(context.GetDevice(), scratch.GetImages(), scratch.GetImageCount(),
 		scratch.GetMetadata(), subResources));
 
 
@@ -95,7 +136,7 @@ void Texture::CreateUploadResources(const GraphicsContext& context, const Direct
 	texDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
 
 	// アップロード用バッファの生成
-	winrt::check_hresult(GraphicsDevice::Get()->CreateCommittedResource(
+	winrt::check_hresult(context.GetDevice()->CreateCommittedResource(
 		&heapProps, // CPU→GPU転送用
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,

@@ -1,4 +1,5 @@
 ﻿#include "RootSignature.h"
+#include <d3dcompiler.h>
 
 RootSignature::RootSignature()
 {

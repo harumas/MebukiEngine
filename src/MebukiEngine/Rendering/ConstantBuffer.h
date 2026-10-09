@@ -1,12 +1,11 @@
 #pragma once
 #include "GraphicsContext.h"
-#include "GraphicsDevice.h"
 
 template <class T>
 class ConstantBuffer
 {
 public:
-	explicit ConstantBuffer(UINT rootParameter, UINT count);
+	explicit ConstantBuffer(ID3D12Device* device, UINT rootParameter, UINT count);
 	~ConstantBuffer();
 
 	// バッファをGPUに転送します
@@ -27,7 +26,7 @@ private:
 };
 
 template <class T>
-ConstantBuffer<T>::ConstantBuffer(UINT rootParameter, UINT count) :
+ConstantBuffer<T>::ConstantBuffer(ID3D12Device* device, UINT rootParameter, UINT count) :
 	rootParameter(rootParameter),
 	count(count),
 	bufferSize(sizeof(T)* count)
@@ -43,7 +42,7 @@ ConstantBuffer<T>::ConstantBuffer(UINT rootParameter, UINT count) :
 	const CD3DX12_RESOURCE_DESC constDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize); // 256アライメントでサイズを指定
 
 	// ヒープの生成
-	winrt::check_hresult(GraphicsDevice::Get()->CreateCommittedResource(
+	winrt::check_hresult(device->CreateCommittedResource(
 		&constHeapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&constDesc,
@@ -72,12 +71,12 @@ void ConstantBuffer<T>::UploadBufferData(const void* src) const
 template <class T>
 void ConstantBuffer<T>::UploadBufferData(const void* src, size_t size, size_t offset)
 {
-	if (offset + size > bufferSize)
+	size_t addressOffset = sizeof(T) * offset;
+
+	if (addressOffset + size > bufferSize)
 	{
 		throw std::out_of_range("ConstantBuffer: Upload size exceeds buffer size");
 	}
-
-	size_t addressOffset = sizeof(T) * offset;
 
 	//指定されたオフセットとサイズでコピーする 
 	uint8_t* dst = reinterpret_cast<uint8_t*>(mappedBuffer);

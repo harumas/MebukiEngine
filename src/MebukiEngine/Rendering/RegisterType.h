@@ -6,4 +6,5 @@ enum RegisterType : unsigned int
 	PerTransform = 1, // モデル行列を格納するレジスタ
 	PerMaterial = 2, // マテリアル固有のデータを格納するレジスタ (指定された領域だけ更新する)
 	SRV = 3, //シェーダーリソースを格納するレジスタ (テクスチャ)
+	ShadowSRV = 4, // シャドウマップ用のレジスタ (t1) 
 };

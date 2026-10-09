@@ -1,10 +1,11 @@
 ﻿#pragma once
 #include "Component.h"
+#include <Rendering/GpuConstants.h>
 
 class DirectionalLight : public Component
 {
 public:
-	explicit DirectionalLight(const std::shared_ptr<Actor>& actorRef);
+	explicit DirectionalLight(ActorRef actorRef);
 
 	DirectionalLightFrameData currentData =
 	{

@@ -18,6 +18,9 @@ public:
 	static bool GetMouseButtonDown(MouseButton button);
 	static bool GetMouseButtonUp(MouseButton button);
 
+	static long GetMouseDeltaX();
+	static long GetMouseDeltaY();
+
 private:
 	static std::shared_ptr<InputContext> context;
 

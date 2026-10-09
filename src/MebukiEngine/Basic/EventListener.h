@@ -1,29 +1,36 @@
 #pragma once
+#include <cstdint>
 
 template< typename... Args>
 class EventListener
 {
 public:
 	using Listener = std::function<void(Args...)>;
+	using ListenerHandle = uint32_t;
 
-	// リスナーを購読します
-	void AddListener(const Listener& listener)
+	// リスナーを購読します。解除に使うハンドルを返します
+	ListenerHandle AddListener(const Listener& listener)
 	{
-		listeners.emplace_back(listener);
+		const ListenerHandle handle = nextHandle++;
+		listeners.push_back({ handle, listener });
+		return handle;
 	}
 
 	// リスナーを購読解除します
-	void RemoveListener(const Listener& listener)
+	void RemoveListener(ListenerHandle handle)
 	{
-		listeners.erase(std::remove(listeners.begin(), listeners.end(), listener), listeners.end());
+		std::erase_if(listeners, [handle](const ListenerEntry& entry)
+		{
+			return entry.handle == handle;
+		});
 	}
 
 	// リスナーを呼び出します
 	void operator()(Args... args) const
 	{
-		for (const auto& listener : listeners)
+		for (const auto& entry : listeners)
 		{
-			listener(args...);
+			entry.listener(args...);
 		}
 	}
 
@@ -34,5 +41,12 @@ public:
 	}
 
 private:
-	std::vector<Listener> listeners; 
+	struct ListenerEntry
+	{
+		ListenerHandle handle;
+		Listener listener;
+	};
+
+	std::vector<ListenerEntry> listeners;
+	ListenerHandle nextHandle = 0;
 };

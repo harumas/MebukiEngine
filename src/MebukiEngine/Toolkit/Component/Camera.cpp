@@ -1,6 +1,9 @@
 ﻿#include "Camera.h"
+#include <Toolkit/Actor/Actor.h>
+#include <Rendering/GraphicsContext.h>
+#include <Rendering/GpuConstants.h>
 
-Camera::Camera(const std::shared_ptr<Actor>& actorRef) :
+Camera::Camera(ActorRef actorRef) :
 	Component(actorRef),
 	fov(XM_PIDIV2* (2.0 / 3.0)), //60 degrees
 	nearPlane(0.1f),

@@ -399,3 +399,6 @@ FodyWeavers.xsd
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# 大容量のテスト用アセット (Intel Sponza等はリポジトリに含めない)
+src/SampleGame/Assets/NewSponza_*.glb

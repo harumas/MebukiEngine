@@ -1,4 +1,7 @@
-﻿#pragma once
+#pragma once
+
+// ディスクリプタヒープに確保するSRVの最大数 (Rendererごとに1つ + シャドウマップ)
+constexpr UINT MAX_SHADER_RESOURCE_COUNT = 1024;
 
 class ShaderResourceBuffer
 {
@@ -9,6 +12,7 @@ public:
 	ID3D12DescriptorHeap* GetDescriptorHeap() const;
 
 private:
+	ID3D12Device* device;
 	winrt::com_ptr<ID3D12DescriptorHeap> srvHeap;
 	UINT resourceCount;
 };
