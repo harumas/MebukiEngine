@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "Basic/Profiler.h"
 #include <psapi.h>
+#include <pix3.h>
 
 #include "Basic/EngineService.h"
 #include "Rendering/GraphicsDevice.h"
@@ -152,6 +153,7 @@ void Application::Render(const GraphicsContext& context, GpuConstants& gpuConsta
 	ID3D12GraphicsCommandList* commandList = context.GetCommandList();
 
 	// --- シャドウパス: シャドウマップに深度だけ描く ---
+	PIXBeginEvent(commandList, PIX_COLOR_INDEX(1), "Pass: Shadow");
 	D3D12_CPU_DESCRIPTOR_HANDLE shadowDsvHandle = shadowMap->GetDSVHandle();
 	commandList->OMSetRenderTargets(0, nullptr, false, &shadowDsvHandle);
 	commandList->ClearDepthStencilView(shadowDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -171,8 +173,10 @@ void Application::Render(const GraphicsContext& context, GpuConstants& gpuConsta
 	D3D12_RESOURCE_BARRIER shadowToSrv = CD3DX12_RESOURCE_BARRIER::Transition(
 		shadowMap->Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	context.ResourceBarrier(1, &shadowToSrv);
+	PIXEndEvent(commandList);
 
 	// --- メインパスの描画対象・ビューポートに戻す (シャドウパスで上書きされているため) ---
+	PIXBeginEvent(commandList, PIX_COLOR_INDEX(2), "Pass: Main");
 	D3D12_CPU_DESCRIPTOR_HANDLE mainRtvHandle = renderPipeline.GetRenderTargetBuffer()->GetRTVHandle();
 	D3D12_CPU_DESCRIPTOR_HANDLE mainDsvHandle = renderPipeline.GetDepthStencilBuffer()->GetDSVHandle();
 	commandList->OMSetRenderTargets(1, &mainRtvHandle, true, &mainDsvHandle);
@@ -196,6 +200,7 @@ void Application::Render(const GraphicsContext& context, GpuConstants& gpuConsta
 	D3D12_RESOURCE_BARRIER srvToShadow = CD3DX12_RESOURCE_BARRIER::Transition(
 		shadowMap->Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	context.ResourceBarrier(1, &srvToShadow);
+	PIXEndEvent(commandList);
 
 	gpuConstants.Reset();
 }

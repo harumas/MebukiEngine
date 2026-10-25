@@ -1,6 +1,7 @@
 #include "RenderPipeline.h"
 #include "RegisterType.h"
 #include "Basic/Profiler.h"
+#include <pix3.h>
 
 void RenderPipeline::Initialize(const WindowInfo& windowInfo)
 {
@@ -50,6 +51,8 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 	// セットアップをする前にコマンドリストをリセット
 	winrt::check_hresult(commandList->Reset(commandAllocator[backBufferIndex].get(), pipelineState.get()));
 
+	PIXBeginEvent(commandList.get(), PIX_COLOR_INDEX(0), "Frame: Begin");
+
 	// バックバッファをレンダーターゲットとして使用する
 	const D3D12_RESOURCE_BARRIER& barrierPresent2RT = renderTargetBuffer->GetResourceBarrier(D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	commandList->ResourceBarrier(1, &barrierPresent2RT);
@@ -79,12 +82,16 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 	// デプスステンシルバッファをクリア
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+	PIXEndEvent(commandList.get());
+
 	// ImGui フレーム開始
 	imguiRenderer->BeginFrame();
 
 	GraphicsContext context(commandList, device.get(), windowInfo);
 
 	onRenderProcess(context, *gpuConstants);
+
+	PIXBeginEvent(commandList.get(), PIX_COLOR_INDEX(3), "Pass: PostRender");
 
 	// 深度バッファをSRVとして読めるように状態遷移し、DSVバインドを解除する
 	D3D12_RESOURCE_BARRIER barrierDepth2SRV = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -106,6 +113,8 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 		D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	commandList->ResourceBarrier(1, &barrierSRV2Depth);
 
+	PIXEndEvent(commandList.get());
+
 	// ImGui 描画（ポストプロセス後、Present前）
 	{
 		ScopedTimer timer("  Frame: ImGui");
@@ -113,8 +122,10 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 	}
 
 	// バックバッファは画面更新に使用される
+	PIXBeginEvent(commandList.get(), PIX_COLOR_INDEX(5), "Frame: End");
 	const D3D12_RESOURCE_BARRIER& barrier2RTPresent = renderTargetBuffer->GetResourceBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	commandList->ResourceBarrier(1, &barrier2RTPresent);
+	PIXEndEvent(commandList.get());
 
 	winrt::check_hresult(commandList->Close());
 

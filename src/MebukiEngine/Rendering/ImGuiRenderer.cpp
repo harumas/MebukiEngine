@@ -7,6 +7,8 @@
 #include "../../ThirdParty/imgui/backends/imgui_impl_win32.h"
 #include "../../ThirdParty/imgui/backends/imgui_impl_dx12.h"
 
+#include <pix3.h>
+
 void ImGuiRenderer::Initialize(
 	ID3D12Device* device,
 	ID3D12CommandQueue* commandQueue,
@@ -64,6 +66,7 @@ void ImGuiRenderer::BeginFrame()
 
 void ImGuiRenderer::EndFrame(ID3D12GraphicsCommandList* commandList)
 {
+	PIXScopedEvent(commandList, PIX_COLOR_INDEX(4), "Pass: ImGui");
 	ImGui::Render();
 
 	// SRV ヒープをセット（描画前にバインドが必要）
