@@ -153,54 +153,58 @@ void Application::Render(const GraphicsContext& context, GpuConstants& gpuConsta
 	ID3D12GraphicsCommandList* commandList = context.GetCommandList();
 
 	// --- シャドウパス: シャドウマップに深度だけ描く ---
-	PIXBeginEvent(commandList, PIX_COLOR_INDEX(1), "Pass: Shadow");
-	D3D12_CPU_DESCRIPTOR_HANDLE shadowDsvHandle = shadowMap->GetDSVHandle();
-	commandList->OMSetRenderTargets(0, nullptr, false, &shadowDsvHandle);
-	commandList->ClearDepthStencilView(shadowDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-	CD3DX12_VIEWPORT shadowViewport(0.0f, 0.0f, static_cast<float>(shadowMap->GetWidth()), static_cast<float>(shadowMap->GetHeight()));
-	CD3DX12_RECT shadowScissor(0, 0, static_cast<LONG>(shadowMap->GetWidth()), static_cast<LONG>(shadowMap->GetHeight()));
-	commandList->RSSetViewports(1, &shadowViewport);
-	commandList->RSSetScissorRects(1, &shadowScissor);
-
-	context.SetPipelineState(shadowShaderPass->GetPipelineState().get());
 	{
-		ScopedTimer timer("  Frame: shadow pass (record)");
-		renderQueue.FlushShadow(context, gpuConstants);
-	}
+		PIXScopedEvent(commandList, PIX_COLOR_INDEX(1), "Pass: Shadow");
 
-	// シャドウマップをメインパスでSRVとして読めるように状態遷移
-	D3D12_RESOURCE_BARRIER shadowToSrv = CD3DX12_RESOURCE_BARRIER::Transition(
-		shadowMap->Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	context.ResourceBarrier(1, &shadowToSrv);
-	PIXEndEvent(commandList);
+		D3D12_CPU_DESCRIPTOR_HANDLE shadowDsvHandle = shadowMap->GetDSVHandle();
+		commandList->OMSetRenderTargets(0, nullptr, false, &shadowDsvHandle);
+		commandList->ClearDepthStencilView(shadowDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+		CD3DX12_VIEWPORT shadowViewport(0.0f, 0.0f, static_cast<float>(shadowMap->GetWidth()), static_cast<float>(shadowMap->GetHeight()));
+		CD3DX12_RECT shadowScissor(0, 0, static_cast<LONG>(shadowMap->GetWidth()), static_cast<LONG>(shadowMap->GetHeight()));
+		commandList->RSSetViewports(1, &shadowViewport);
+		commandList->RSSetScissorRects(1, &shadowScissor);
+
+		context.SetPipelineState(shadowShaderPass->GetPipelineState().get());
+		{
+			ScopedTimer timer("  Frame: shadow pass (record)");
+			renderQueue.FlushShadow(context, gpuConstants);
+		}
+
+		// シャドウマップをメインパスでSRVとして読めるように状態遷移
+		D3D12_RESOURCE_BARRIER shadowToSrv = CD3DX12_RESOURCE_BARRIER::Transition(
+			shadowMap->Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		context.ResourceBarrier(1, &shadowToSrv);
+	}
 
 	// --- メインパスの描画対象・ビューポートに戻す (シャドウパスで上書きされているため) ---
-	PIXBeginEvent(commandList, PIX_COLOR_INDEX(2), "Pass: Main");
-	D3D12_CPU_DESCRIPTOR_HANDLE mainRtvHandle = renderPipeline.GetRenderTargetBuffer()->GetRTVHandle();
-	D3D12_CPU_DESCRIPTOR_HANDLE mainDsvHandle = renderPipeline.GetDepthStencilBuffer()->GetDSVHandle();
-	commandList->OMSetRenderTargets(1, &mainRtvHandle, true, &mainDsvHandle);
-
-	CD3DX12_VIEWPORT mainViewport(0.0f, 0.0f, static_cast<float>(currentWindowInfo.width), static_cast<float>(currentWindowInfo.height));
-	CD3DX12_RECT mainScissor(0, 0, currentWindowInfo.width, currentWindowInfo.height);
-	commandList->RSSetViewports(1, &mainViewport);
-	commandList->RSSetScissorRects(1, &mainScissor);
-
-	// シャドウマップのSRVをバインド (FrameCBは既に上でセット済み)
-	gpuConstants.SetShadowMapSRV(context, shadowMap->GetSRVHandle());
-
-	// --- メインパス: 集めておいた描画データを実際のマテリアルで発行する ---
 	{
-		ScopedTimer timer("  Frame: main pass (record)");
-		renderQueue.Flush(context, gpuConstants);
-	}
-	renderQueue.Clear();
+		PIXScopedEvent(commandList, PIX_COLOR_INDEX(2), "Pass: Main");
 
-	// シャドウマップを次のフレームでまた書き込めるように戻す
-	D3D12_RESOURCE_BARRIER srvToShadow = CD3DX12_RESOURCE_BARRIER::Transition(
-		shadowMap->Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	context.ResourceBarrier(1, &srvToShadow);
-	PIXEndEvent(commandList);
+		D3D12_CPU_DESCRIPTOR_HANDLE mainRtvHandle = renderPipeline.GetRenderTargetBuffer()->GetRTVHandle();
+		D3D12_CPU_DESCRIPTOR_HANDLE mainDsvHandle = renderPipeline.GetDepthStencilBuffer()->GetDSVHandle();
+		commandList->OMSetRenderTargets(1, &mainRtvHandle, true, &mainDsvHandle);
+
+		CD3DX12_VIEWPORT mainViewport(0.0f, 0.0f, static_cast<float>(currentWindowInfo.width), static_cast<float>(currentWindowInfo.height));
+		CD3DX12_RECT mainScissor(0, 0, currentWindowInfo.width, currentWindowInfo.height);
+		commandList->RSSetViewports(1, &mainViewport);
+		commandList->RSSetScissorRects(1, &mainScissor);
+
+		// シャドウマップのSRVをバインド (FrameCBは既に上でセット済み)
+		gpuConstants.SetShadowMapSRV(context, shadowMap->GetSRVHandle());
+
+		// --- メインパス: 集めておいた描画データを実際のマテリアルで発行する ---
+		{
+			ScopedTimer timer("  Frame: main pass (record)");
+			renderQueue.Flush(context, gpuConstants);
+		}
+		renderQueue.Clear();
+
+		// シャドウマップを次のフレームでまた書き込めるように戻す
+		D3D12_RESOURCE_BARRIER srvToShadow = CD3DX12_RESOURCE_BARRIER::Transition(
+			shadowMap->Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		context.ResourceBarrier(1, &srvToShadow);
+	}
 
 	gpuConstants.Reset();
 }

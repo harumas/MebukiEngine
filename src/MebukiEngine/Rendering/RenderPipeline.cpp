@@ -51,38 +51,39 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 	// セットアップをする前にコマンドリストをリセット
 	winrt::check_hresult(commandList->Reset(commandAllocator[backBufferIndex].get(), pipelineState.get()));
 
-	PIXBeginEvent(commandList.get(), PIX_COLOR_INDEX(0), "Frame: Begin");
-
-	// バックバッファをレンダーターゲットとして使用する
-	const D3D12_RESOURCE_BARRIER& barrierPresent2RT = renderTargetBuffer->GetResourceBarrier(D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	commandList->ResourceBarrier(1, &barrierPresent2RT);
-
-	CD3DX12_VIEWPORT viewPort(0.0f, 0.0f, windowInfo.width, windowInfo.height);
-	CD3DX12_RECT rect(0.0f, 0.0f, windowInfo.width, windowInfo.height);
-
-	commandList->RSSetViewports(1, &viewPort);
-	commandList->RSSetScissorRects(1, &rect);
-
-	// ルートシグネチャをセット 
-	commandList->SetGraphicsRootSignature(rootSignature->Get());
-
-	// ディスクリプタヒープをセット 
-	const auto heaps = gpuConstants->GetDescriptorHeaps();
-	commandList->SetDescriptorHeaps(heaps.size(), heaps.data());
-
-	// レンダーターゲットをセット
 	const D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle = renderTargetBuffer->GetRTVHandle();
 	const D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle = depthStencilBuffer->GetDSVHandle();
-	commandList->OMSetRenderTargets(1, &rtvHandle, true, &dsvHandle);
 
-	// レンダーターゲットをクリア
-	constexpr float backgroundColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };// 赤、緑、青、アルファ
-	commandList->ClearRenderTargetView(rtvHandle, backgroundColor, 0, nullptr);
+	{
+		PIXScopedEvent(commandList.get(), PIX_COLOR_INDEX(0), "Frame: Begin");
 
-	// デプスステンシルバッファをクリア
-	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		// バックバッファをレンダーターゲットとして使用する
+		const D3D12_RESOURCE_BARRIER& barrierPresent2RT = renderTargetBuffer->GetResourceBarrier(D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		commandList->ResourceBarrier(1, &barrierPresent2RT);
 
-	PIXEndEvent(commandList.get());
+		CD3DX12_VIEWPORT viewPort(0.0f, 0.0f, windowInfo.width, windowInfo.height);
+		CD3DX12_RECT rect(0.0f, 0.0f, windowInfo.width, windowInfo.height);
+
+		commandList->RSSetViewports(1, &viewPort);
+		commandList->RSSetScissorRects(1, &rect);
+
+		// ルートシグネチャをセット 
+		commandList->SetGraphicsRootSignature(rootSignature->Get());
+
+		// ディスクリプタヒープをセット 
+		const auto heaps = gpuConstants->GetDescriptorHeaps();
+		commandList->SetDescriptorHeaps(heaps.size(), heaps.data());
+
+		// レンダーターゲットをセット
+		commandList->OMSetRenderTargets(1, &rtvHandle, true, &dsvHandle);
+
+		// レンダーターゲットをクリア
+		constexpr float backgroundColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };// 赤、緑、青、アルファ
+		commandList->ClearRenderTargetView(rtvHandle, backgroundColor, 0, nullptr);
+
+		// デプスステンシルバッファをクリア
+		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	}
 
 	// ImGui フレーム開始
 	imguiRenderer->BeginFrame();
@@ -91,29 +92,29 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 
 	onRenderProcess(context, *gpuConstants);
 
-	PIXBeginEvent(commandList.get(), PIX_COLOR_INDEX(3), "Pass: PostRender");
-
-	// 深度バッファをSRVとして読めるように状態遷移し、DSVバインドを解除する
-	D3D12_RESOURCE_BARRIER barrierDepth2SRV = CD3DX12_RESOURCE_BARRIER::Transition(
-		depthStencilBuffer->Get(),
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	commandList->ResourceBarrier(1, &barrierDepth2SRV);
-	commandList->OMSetRenderTargets(1, &rtvHandle, true, nullptr);
-
 	{
-		ScopedTimer timer("  Frame: post render (debug depth etc.)");
-		onPostRenderProcess(context, *gpuConstants);
+		PIXScopedEvent(commandList.get(), PIX_COLOR_INDEX(3), "Pass: PostRender");
+
+		// 深度バッファをSRVとして読めるように状態遷移し、DSVバインドを解除する
+		D3D12_RESOURCE_BARRIER barrierDepth2SRV = CD3DX12_RESOURCE_BARRIER::Transition(
+			depthStencilBuffer->Get(),
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		commandList->ResourceBarrier(1, &barrierDepth2SRV);
+		commandList->OMSetRenderTargets(1, &rtvHandle, true, nullptr);
+
+		{
+			ScopedTimer timer("  Frame: post render (debug depth etc.)");
+			onPostRenderProcess(context, *gpuConstants);
+		}
+
+		// 深度バッファの状態をDEPTH_WRITEに戻す
+		D3D12_RESOURCE_BARRIER barrierSRV2Depth = CD3DX12_RESOURCE_BARRIER::Transition(
+			depthStencilBuffer->Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		commandList->ResourceBarrier(1, &barrierSRV2Depth);
 	}
-
-	// 深度バッファの状態をDEPTH_WRITEに戻す
-	D3D12_RESOURCE_BARRIER barrierSRV2Depth = CD3DX12_RESOURCE_BARRIER::Transition(
-		depthStencilBuffer->Get(),
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	commandList->ResourceBarrier(1, &barrierSRV2Depth);
-
-	PIXEndEvent(commandList.get());
 
 	// ImGui 描画（ポストプロセス後、Present前）
 	{
@@ -122,10 +123,12 @@ void RenderPipeline::RenderFrame(const WindowInfo& windowInfo)
 	}
 
 	// バックバッファは画面更新に使用される
-	PIXBeginEvent(commandList.get(), PIX_COLOR_INDEX(5), "Frame: End");
-	const D3D12_RESOURCE_BARRIER& barrier2RTPresent = renderTargetBuffer->GetResourceBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	commandList->ResourceBarrier(1, &barrier2RTPresent);
-	PIXEndEvent(commandList.get());
+	{
+		PIXScopedEvent(commandList.get(), PIX_COLOR_INDEX(5), "Frame: End");
+
+		const D3D12_RESOURCE_BARRIER& barrier2RTPresent = renderTargetBuffer->GetResourceBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		commandList->ResourceBarrier(1, &barrier2RTPresent);
+	}
 
 	winrt::check_hresult(commandList->Close());
 
