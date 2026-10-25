@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    {
+      "name": "directxtex",
+      "features": [ "dx12" ]
+    },
+    "winpixevent"
+  ]
+}

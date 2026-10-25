@@ -402,3 +402,6 @@ FodyWeavers.xsd
 
 # 大容量のテスト用アセット (Intel Sponza等はリポジトリに含めない)
 src/SampleGame/Assets/NewSponza_*.glb
+
+# vcpkg manifest install output
+vcpkg_installed/
